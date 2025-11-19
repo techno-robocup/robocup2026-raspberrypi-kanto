@@ -116,7 +116,10 @@ class Robot:
     return self.__uart_device.send(f"Rescue {self.__Rescue_angle:4d}{self.__Rescue_wire}")
 
   def get_ultrasonic(self) -> List[int]:
-    return self.__uart_device.send("GET ultrasonic")
+    return self.__uart_device.send("GET usonic")
+
+  def get_button(self) -> bool:
+    return self.__uart_device.send("GET button")
 
 if __name__ == "__main__":
   pass

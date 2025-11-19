@@ -53,6 +53,15 @@ class uart_io:
       if self.__Serial_port.isOpen():
         break
     return None
+  
+  def isConnected(self) -> bool:
+    return self.__Serial_port.isOpen
+
+  def reConnect(self) -> None:
+    if self.isConnected():
+      self.__Serial_port.close()
+    self.connect()
+    return None
 
 
 class Robot:

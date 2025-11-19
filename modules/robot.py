@@ -114,5 +114,8 @@ class Robot:
   def send_arm(self):
     return self.__uart_device.send(f"Rescue {self.__Rescue_angle:4d}{self.__Rescue_wire}")
 
+  def get_ultrasonic(self) -> List[int]:
+    return self.__uart_device.send("GET ultrasonic")
+
 if __name__ == "__main__":
   pass

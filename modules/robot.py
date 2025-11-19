@@ -90,6 +90,8 @@ class Robot:
   def __init__(self):
     self.logger = logger.get_logger()
 
+  def set_uart_device(self, device: uart_io):
+    self.__uart_device = device
 
 if __name__ == "__main__":
   pass

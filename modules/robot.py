@@ -106,5 +106,13 @@ class Robot:
   def send_speed(self):
     return self.__uart_device.send(f"MOTOR {self.__MOTOR_L} {self.__MOTOR_R}")
 
+  def set_arm(self, angle: int, wire: int):
+    assert wire == 0 or wire == 1
+    self.__Rescue_angle = angle
+    self.__Rescue_wire = wire
+
+  def send_arm(self):
+    return self.__uart_device.send(f"Rescue {self.__Rescue_angle:4d}{self.__Rescue_wire}")
+
 if __name__ == "__main__":
   pass

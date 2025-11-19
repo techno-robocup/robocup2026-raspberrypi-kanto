@@ -49,6 +49,7 @@ class uart_io:
     return None
 
   def connect(self) -> None:
+    logger.get_logger().info(f"Connecting to {self.__device_name}")
     while True:
       self.__Serial_port = serial.Serial(self.__device_name, self.__baud_rate, timeout=self.__timeout_)
       if self.__Serial_port.isOpen():
@@ -78,6 +79,7 @@ class uart_io:
           else:
             return False
         else:
+          logger.get_logger().error(f"No response from ESP32 for message id {__message_id_increment}")
           return False
 
   def close(self) -> None:

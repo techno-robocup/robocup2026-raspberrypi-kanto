@@ -1,5 +1,7 @@
 import modules.constants as consts
 import modules.logger as logger
+from typing import Optional
+import serial
 
 class Message:
   def __init__(self, *args):
@@ -29,7 +31,29 @@ class Message:
 
 
 class uart_io:
-  pass
+  def __init__(self):
+    self.__Serial_port: Optional[serial.Serial] = None
+    self.__device_name: Optional[str] = None
+    self.__baud_rate: Optional[int] = None
+    self.__timeout: Optional[float] = None
+
+  def list_ports(self) -> ListPortInfo:
+    return list(serial.tools.list_ports.comports())
+
+  def connect(self, port: ListPortInfo, baud_rate: int, timeout: float) -> None:
+    self.__device_name = port.device
+    self.__baud_rate = baud_rate
+    self.__timeout = timeout
+    self.connect()
+    return None
+
+  def connect(self) -> None:
+    while True:
+      self.__Serial_port = serial.Serial(self.__device_name, self.__baud_rate, timeout=self.__timeout_)
+      if self.__Serial_port.isOpen():
+        break
+    return None
+
 
 class Robot:
   def __init__(self):

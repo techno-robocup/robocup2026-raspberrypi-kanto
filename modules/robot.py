@@ -80,6 +80,9 @@ class uart_io:
         else:
           return False
 
+  def close(self) -> None:
+    if self.isConnected():
+      self.__Serial_port.close()
 
 class Robot:
   def __init__(self):

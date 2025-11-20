@@ -5,6 +5,7 @@ import serial
 import serial.tools.list_ports
 import modules.camera
 import threading
+import numpy as np
 import numpy.typing as npt
 
 

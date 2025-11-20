@@ -16,7 +16,7 @@ Rescue_Camera_Controls = {
 }
 Rescue_Camera_Size = (4608, 2592)
 Rescue_Camera_Formats = "RGB888"
-Rescue_Camera_lores = (Rescue_Camera_Size, Rescue_Camera_Size)
+Rescue_Camera_lores = (Rescue_Camera_Size[0], Rescue_Camera_Size[1])
 Rescue_Camera_precallback = None
 
 Linetrace_Camera_Port = 1

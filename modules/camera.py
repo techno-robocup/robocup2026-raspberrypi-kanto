@@ -4,12 +4,11 @@ import cv2
 import threading
 import modules.robot
 import modules.logger
-import modules.constants
+import modules.constants as consts
 from typing import Callable, Any, Dict, Tuple, List, Optional
 from picamera2 import Picamera2, CompletedRequest, MappedArray
 
 logger = modules.logger.get_logger()
-const = modules.constants
 class Camera:
   """Camera class for handling Picamera2 operations."""
 
@@ -75,7 +74,7 @@ def detect_green_marks(orig_image: np.ndarray,
   hsv = cv2.cvtColor(orig_image, cv2.COLOR_RGB2HSV)
 
   # Create mask for green color
-  green_mask = cv2.inRange(hsv, const.lower_green, const.upper_green)
+  green_mask = cv2.inRange(hsv, consts.lower_green, consts.upper_green)
 
   # Clean up noise with optimized kernel
   kernel = np.ones((3, 3), np.uint8)
@@ -97,7 +96,7 @@ def detect_green_marks(orig_image: np.ndarray,
 
   # Process each contour
   for contour in green_contours:
-    if cv2.contourArea(contour) > const.MIN_GREEN_AREA:
+    if cv2.contourArea(contour) > consts.MIN_GREEN_AREA:
       # Get bounding box
       x, y, w, h = cv2.boundingRect(contour)
       logger.debug(f"Green mark found at ({x}, {y}) with size ({w}, {h})")
@@ -125,7 +124,7 @@ def detect_red_marks(orig_image: np.ndarray) -> None:
 
   hsv = cv2.cvtColor(orig_image, cv2.COLOR_RGB2HSV)
 
-  red_mask = cv2.inRange(hsv, const.lower_red, const.upper_red)
+  red_mask = cv2.inRange(hsv, consts.lower_red, consts.upper_red)
 
   kernel = np.ones((3, 3), np.uint8)
   red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel, iterations=3)
@@ -175,31 +174,31 @@ def _check_black_lines_around_mark(blackline_image: np.ndarray, center_x: int,
   # Check bottom
   roi_b = blackline_image[center_y +
                           h // 2:min(center_y + h // 2 +
-                                     roi_height, const.LINETRACE_CAMERA_LORES_HEIGHT),
+                                     roi_height, consts.LINETRACE_CAMERA_LORES_HEIGHT),
                           center_x - roi_width // 2:center_x + roi_width // 2]
-  if roi_b.size > 0 and np.sum(roi_b < const.BLACK_WHITE_THRESHOLD) / roi_b.size <= black_threshold:
+  if roi_b.size > 0 and np.sum(roi_b < consts.BLACK_WHITE_THRESHOLD) / roi_b.size <= black_threshold:
     black_detections[0] = 1
 
   # Check top
   roi_t = blackline_image[max(center_y - h // 2 -
                               roi_height, 0):center_y - h // 2,
                           center_x - roi_width // 2:center_x + roi_width // 2]
-  if roi_t.size > 0 and np.sum(roi_t < const.BLACK_WHITE_THRESHOLD) / roi_t.size <= black_threshold:
+  if roi_t.size > 0 and np.sum(roi_t < consts.BLACK_WHITE_THRESHOLD) / roi_t.size <= black_threshold:
     black_detections[1] = 1
 
   # Check left
   roi_l = blackline_image[center_y - roi_height // 2:center_y + roi_height // 2,
                           max(center_x - w // 2 - roi_width, 0):center_x -
                           w // 2]
-  if roi_l.size > 0 and np.sum(roi_l < const.BLACK_WHITE_THRESHOLD) / roi_l.size <= black_threshold:
+  if roi_l.size > 0 and np.sum(roi_l < consts.BLACK_WHITE_THRESHOLD) / roi_l.size <= black_threshold:
     black_detections[2] = 1
 
   # Check right
   roi_r = blackline_image[center_y - roi_height // 2:center_y + roi_height // 2,
                           center_x +
                           w // 2:min(center_x + w // 2 +
-                                     roi_width, const.LINETRACE_CAMERA_LORES_WIDTH)]
-  if roi_r.size > 0 and np.sum(roi_r < const.BLACK_WHITE_THRESHOLD) / roi_r.size <= black_threshold:
+                                     roi_width, consts.LINETRACE_CAMERA_LORES_WIDTH)]
+  if roi_r.size > 0 and np.sum(roi_r < consts.BLACK_WHITE_THRESHOLD) / roi_r.size <= black_threshold:
     black_detections[3] = 1
 
   return black_detections
@@ -241,7 +240,7 @@ def find_best_contour(contours: List[np.ndarray], camera_x: int, camera_y: int,
 
   # Filter contours by minimum area first
   valid_contours = [(i, contour) for i, contour in enumerate(contours)
-                    if cv2.contourArea(contour) >= const.MIN_BLACK_LINE_AREA]
+                    if cv2.contourArea(contour) >= consts.MIN_BLACK_LINE_AREA]
 
   if not valid_contours:
     return None
@@ -309,8 +308,8 @@ def calculate_slope(contour: np.ndarray, cx: int, cy: int) -> float:
   """Calculate the slope of the line for steering."""
   try:
     # Set base point
-    base_x = const.LINETRACE_CAMERA_LORES_WIDTH // 2
-    base_y = const.LINETRACE_CAMERA_LORES_HEIGHT
+    base_x = consts.LINETRACE_CAMERA_LORES_WIDTH // 2
+    base_y = consts.LINETRACE_CAMERA_LORES_HEIGHT
 
     # Calculate slope between top and center points
     if cx != base_x:  # Avoid division by zero or tiny values
@@ -360,7 +359,7 @@ def _draw_debug_contours(debug_image: np.ndarray) -> None:
 
 LASTBLACKLINE_LOCK = threading.Lock()
 SLOPE_LOCK = threading.Lock()
-lastblackline = const.LINETRACE_CAMERA_LORES_WIDTH // 2
+lastblackline = consts.LINETRACE_CAMERA_LORES_WIDTH // 2
 line_area: Optional[float] = None
 
 def apply_center_vignette(img, strength=0.5):#filter function
@@ -389,7 +388,7 @@ def Linetrace_Camera_Pre_callback(request):
       image = apply_center_vignette(image)
       cv2.imwrite(f"bin/{current_time:.3f}_linetrace_format.jpg",image)
       gray_image = cv2.cvtColor(image,cv2.COLOR_RGB2GRAY)
-      _, binary_image = cv2.threshold(gray_image, const.BLACK_WHITE_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
+      _, binary_image = cv2.threshold(gray_image, consts.BLACK_WHITE_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
       cv2.imwrite(f"bin/{current_time:.3f}_linetrace_binary",binary_image)
       kernel = np.ones((3,3),np.uint8)
       binary_image = cv2.morphologyEx(binary_image,cv2.MORRH_OPEN,kernel,iteration=6)
@@ -403,8 +402,8 @@ def Linetrace_Camera_Pre_callback(request):
         modules.robot.Robot.slope = None
         return
 
-      best_contour = find_best_contour(contours, const.LINETRACE_CAMERA_LORES_WIDTH,
-                                         const.LINETRACE_CAMERA_LORES_HEIGHT,
+      best_contour = find_best_contour(contours, consts.LINETRACE_CAMERA_LORES_WIDTH,
+                                         consts.LINETRACE_CAMERA_LORES_HEIGHT,
                                          lastblackline)
 
       if best_contour is None:

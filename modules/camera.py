@@ -375,6 +375,7 @@ def apply_center_vignette(img, strength=0.5):#filter function
   kernel_y = cv2.getGaussianKernel(h, h * strength)
   mask = kernel_y @ kernel_x.T
   mask = mask / mask.max()
+  mask = 1.0 - mask
   vignette = np.zeros_like(img)
   for i in range(3):  # RGB
       vignette[:,:,i] = img[:,:,i] * mask

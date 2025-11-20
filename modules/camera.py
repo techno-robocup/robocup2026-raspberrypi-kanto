@@ -3,7 +3,7 @@ import numpy as np
 import threading
 import modules.logger
 from typing import Callable, Any, Dict, Tuple
-from picamera2 import Picamera2
+from picamera2 import Picamera2, CompletedRequest
 
 logger = modules.logger.get_logger()
 
@@ -49,3 +49,9 @@ class Camera:
     if self.is_camera_running:
       self.cam.stop()
       self.is_camera_running = False
+
+def Rescue_precallback_func(request: CompletedRequest) -> None:
+  modules.logger.get_logger().info("Rescue Camera pre-callback triggered")
+  with MappedArray(request, "lores") as mapped_array:
+    image = mapped_array.array
+    modules.robot.robot.write_rescue_image(image)

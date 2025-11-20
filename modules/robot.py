@@ -4,6 +4,8 @@ from typing import Optional, List
 import serial
 import serial.tools.list_ports
 import modules.camera
+import threading
+import numpy.typing as npt
 
 
 class Message:
@@ -124,6 +126,8 @@ class Robot:
       modules.constants.Rescue_Camera_lores,
       modules.constants.Rescue_Camera_precallback
     )
+    self.__rescue_camera_lock = threading.Lock()
+    self.__rescue_camera_image: Optional[npt.NDArray[np.uint8]] = None
     self.__Linetrace_Camera.start_cam()
     self.__Rescue_Camera.start_cam()
 
@@ -154,6 +158,12 @@ class Robot:
   def get_button(self) -> bool:
     return self.__uart_device.send("GET button")
 
+  def write_rescue_image(self, image: npt.NDArray[np.uint8]) -> None:
+    with self.__rescue_camera_lock:
+      self.__rescue_camera_image: Optional[npt.NDArray[np.uint8]] = image
+    return None
+
+robot = modules.robot.Robot()
 
 if __name__ == "__main__":
   pass

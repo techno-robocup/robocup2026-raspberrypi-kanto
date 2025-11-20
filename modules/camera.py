@@ -67,6 +67,7 @@ def Rescue_precallback_func(request: CompletedRequest) -> None:
   modules.logger.get_logger().info("Rescue Camera pre-callback triggered")
   with MappedArray(request, "lores") as mapped_array:
     image = mapped_array.array
+    image = cv2.rotate(image, cv2.ROTATE_180)
     current_time = time.time()
     cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
     if robot is not None:

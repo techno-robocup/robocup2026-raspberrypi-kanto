@@ -6,7 +6,7 @@ logger = modules.logger.get_logger()
 
 logger.debug("Logger initialized")
 
-robot = modules.robot.Robot()
+robot = modules.robot.robot
 uart_dev = modules.robot.uart_io()
 uart_devices = uart_dev.list_ports()
 uart_dev.connect(uart_devices[0].device, consts.UART_BAUD_RATE,

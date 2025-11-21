@@ -369,12 +369,12 @@ LASTBLACKLINE_LOCK = threading.Lock()
 lastblackline = consts.LINETRACE_CAMERA_LORES_WIDTH // 2
 line_area: Optional[float] = None
 
-def gamma_correction(image, gamma=2):
-  """Apply gamma correction. Gamma < 1 brightens darks, gamma > 1 darkens brights."""
-  inv_gamma = 1.0 / gamma
-  table = np.array([((i / 255.0) ** inv_gamma) * 255
-                    for i in range(256)]).astype(np.uint8)
-  return cv2.LUT(image, table)
+def log_compression(image, c=30):
+  """Logarithmic compression - strongly reduces bright areas (glare/reflections)."""
+  img = image.astype(np.float32)
+  img = c * np.log1p(img)  # log(1 + x)
+  img = (img / img.max()) * 255
+  return img.astype(np.uint8)
 
 def Linetrace_Camera_Pre_callback(request):
   global lastblackline, LASTBLACKLINE_LOCK
@@ -389,7 +389,7 @@ def Linetrace_Camera_Pre_callback(request):
       image = image[:, x_start:x_start + crop_w]
       image = cv2.resize(image,(w,h), interpolation=cv2.INTER_LINEAR)
       cv2.imwrite(f"bin/{current_time:.3f}_linetrace_origin.jpg", image)
-      image = gamma_correction(image)
+      image = log_compression(image)
       cv2.imwrite(f"bin/{current_time:.3f}_linetrace_format.jpg",image)
       gray_image = cv2.cvtColor(image,cv2.COLOR_RGB2GRAY)
       _, binary_image = cv2.threshold(gray_image, consts.BLACK_WHITE_THRESHOLD, 255, cv2.THRESH_BINARY_INV)

@@ -425,7 +425,7 @@ def Linetrace_Camera_Pre_callback(request):
       cv2.imwrite(f"bin/{current_time:.3f}_tracking.jpg")
 
   except SystemExit:
-    print("SystemExit caught")
+    logger.error("SystemExit caught")
     raise
   except Exception as e:
     logger.error(f"Error in line tracing: {e}")

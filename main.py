@@ -1,6 +1,7 @@
 import modules.constants as consts
 import modules.logger
 import modules.robot
+import time
 
 logger = modules.logger.get_logger()
 
@@ -16,6 +17,6 @@ robot.set_uart_device(uart_dev)
 logger.debug("Objects Initialized")
 
 if __name__ == "__main__":
-  pass
+  time.sleep(3)
 
 logger.debug("Program Stop")

@@ -369,6 +369,13 @@ LASTBLACKLINE_LOCK = threading.Lock()
 lastblackline = consts.LINETRACE_CAMERA_LORES_WIDTH // 2
 line_area: Optional[float] = None
 
+def log_compression(image, c=30):
+  """Logarithmic compression - strongly reduces bright areas (glare/reflections)."""
+  img = image.astype(np.float32)
+  img = c * np.log1p(img)  # log(1 + x)
+  img = (img / img.max()) * 255
+  return img.astype(np.uint8)
+
 def reduce_glare_clahe(image, clip_limit=2.0):
   """Use CLAHE on luminance to balance brightness and reduce glare."""
   lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
@@ -377,6 +384,12 @@ def reduce_glare_clahe(image, clip_limit=2.0):
   l = clahe.apply(l)
   lab = cv2.merge([l, a, b])
   return cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
+
+def reduce_glare_combined(image, clip_limit=2.0, log_c=30):
+  """Combine CLAHE and log compression for maximum glare reduction."""
+  image = reduce_glare_clahe(image, clip_limit)
+  image = log_compression(image, log_c)
+  return image
 
 def Linetrace_Camera_Pre_callback(request):
   global lastblackline, LASTBLACKLINE_LOCK
@@ -391,7 +404,7 @@ def Linetrace_Camera_Pre_callback(request):
       image = image[:, x_start:x_start + crop_w]
       image = cv2.resize(image,(w,h), interpolation=cv2.INTER_LINEAR)
       cv2.imwrite(f"bin/{current_time:.3f}_linetrace_origin.jpg", image)
-      image = reduce_glare_clahe(image)
+      image = reduce_glare_combined(image)
       cv2.imwrite(f"bin/{current_time:.3f}_linetrace_format.jpg",image)
       gray_image = cv2.cvtColor(image,cv2.COLOR_RGB2GRAY)
       _, binary_image = cv2.threshold(gray_image, consts.BLACK_WHITE_THRESHOLD, 255, cv2.THRESH_BINARY_INV)

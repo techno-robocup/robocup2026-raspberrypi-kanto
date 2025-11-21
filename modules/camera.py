@@ -381,6 +381,7 @@ def apply_center_vignette(img, strength=0.5):#filter function
   return vignette
 
 def Linetrace_Camera_Pre_callback(request):
+  global lastblackline, LASTBLACKLINE_LOCK
   logger.debug("Linetrace Camera Pre call-back called")
   current_time = time.time()
   try:

@@ -391,8 +391,8 @@ def reduce_glare_clahe(image, clip_limit=2.0):
   return cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
 
 def reduce_glare_combined(image, contrast_factor=0.5, clip_limit=2.0):
-  """Combine contrast reduction and CLAHE for glare reduction."""
-  image = reduce_contrast(image, contrast_factor)
+  """Combine contrast reduction (V channel) and CLAHE for glare reduction."""
+  image = reduce_contrast_v(image, contrast_factor)
   image = reduce_glare_clahe(image, clip_limit)
   return image
 

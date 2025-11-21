@@ -17,3 +17,5 @@ logger.debug("Objects Initialized")
 
 if __name__ == "__main__":
   pass
+
+logger.debug("Program Stop")

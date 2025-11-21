@@ -1,5 +1,6 @@
 import libcamera
 import numpy as np
+import modules.camera
 
 UART_BAUD_RATE = 9600
 UART_TIMEOUT = 0.2
@@ -36,7 +37,7 @@ Linetrace_Camera_Size = (4608, 2592)
 Linetrace_Camera_Formats = "RGB888"
 Linetrace_Camera_lores = (Linetrace_Camera_Size[0] // 8,
                           Linetrace_Camera_Size[1] // 8)
-Linetrace_Camera_precallback = None
+Linetrace_Camera_precallback = modules.camera.Linetrace_Camera_Pre_callback
 
 BLACK_WHITE_THRESHOLD = 55
 LINETRACE_CAMERA_LORES_HEIGHT = 180

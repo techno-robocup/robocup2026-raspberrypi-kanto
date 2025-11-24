@@ -158,10 +158,12 @@ class Robot:
     return self.__uart_device.send(
         f"Rescue {self.__Rescue_angle:4d}{self.__Rescue_wire}")
 
-  def get_ultrasonic(self) -> List[int]:
+  @property
+  def ultrasonic(self) -> List[int]:
     return self.__uart_device.send("GET usonic")
 
-  def get_button(self) -> bool:
+  @property
+  def button(self) -> bool:
     return self.__uart_device.send("GET button")
 
   def write_rescue_image(self, image: npt.NDArray[np.uint8]) -> None:
@@ -177,11 +179,13 @@ class Robot:
     with self.__linetrace_lock:
         self.__slope = slope
 
-  def read_linetrace_slope(self) -> Optional[float]:
+  @property
+  def linetrace_slope(self) -> Optional[float]:
     with self.__linetrace_lock:
         return self.__slope
 
-  def read_linetrace_stop(self) -> bool:
+  @property
+  def linetrace_stop(self) -> bool:
     with self.__linetrace_lock:
         return self.__is_stop
 

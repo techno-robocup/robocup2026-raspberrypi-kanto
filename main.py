@@ -66,7 +66,7 @@ def linetrace_loop():
   try:
     while True:
       # Read current slope from camera processing
-      slope = robot.read_linetrace_slope()
+      slope = robot.linetrace_slope
 
       # Calculate motor speeds based on slope
       motor_l, motor_r = calculate_motor_speeds(slope)

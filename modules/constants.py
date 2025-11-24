@@ -1,15 +1,18 @@
 import libcamera
 import numpy as np
 
+
 def Linetrace_Camera_precallback_func(request):
   """Linetrace camera pre-callback - imports camera module lazily to avoid circular import."""
   import modules.camera
   modules.camera.Linetrace_Camera_Pre_callback(request)
 
+
 def Rescue_Camera_precallback_func(request):
   """Rescue camera pre-callback - imports camera module lazily to avoid circular import."""
   import modules.camera
   modules.camera.Rescue_precallback_func(request)
+
 
 UART_BAUD_RATE = 9600
 UART_TIMEOUT = 0.2

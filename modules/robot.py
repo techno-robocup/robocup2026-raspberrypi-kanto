@@ -112,21 +112,19 @@ class Robot:
     self.__MOTOR_L = 1500
     self.__MOTOR_R = 1500
     self.__Linetrace_Camera = modules.camera.Camera(
-      modules.constants.Linetrace_Camera_Port,
-      modules.constants.Linetrace_Camera_Controls,
-      modules.constants.Linetrace_Camera_Size,
-      modules.constants.Linetrace_Camera_Formats,
-      modules.constants.Linetrace_Camera_lores,
-      modules.constants.Linetrace_Camera_precallback
-    )
+        modules.constants.Linetrace_Camera_Port,
+        modules.constants.Linetrace_Camera_Controls,
+        modules.constants.Linetrace_Camera_Size,
+        modules.constants.Linetrace_Camera_Formats,
+        modules.constants.Linetrace_Camera_lores,
+        modules.constants.Linetrace_Camera_precallback)
     self.__Rescue_Camera = modules.camera.Camera(
-      modules.constants.Rescue_Camera_Port,
-      modules.constants.Rescue_Camera_Controls,
-      modules.constants.Rescue_Camera_Size,
-      modules.constants.Rescue_Camera_Formats,
-      modules.constants.Rescue_Camera_lores,
-      modules.constants.Rescue_Camera_precallback
-    )
+        modules.constants.Rescue_Camera_Port,
+        modules.constants.Rescue_Camera_Controls,
+        modules.constants.Rescue_Camera_Size,
+        modules.constants.Rescue_Camera_Formats,
+        modules.constants.Rescue_Camera_lores,
+        modules.constants.Rescue_Camera_precallback)
     self.__rescue_camera_lock = threading.Lock()
     self.__linetrace_lock = threading.Lock()
     self.__rescue_camera_image: Optional[npt.NDArray[np.uint8]] = None
@@ -170,24 +168,25 @@ class Robot:
     with self.__rescue_camera_lock:
       self.__rescue_camera_image: Optional[npt.NDArray[np.uint8]] = image
     return None
-  
+
   def write_linetrace_stop(self, flag: bool) -> None:
     with self.__linetrace_lock:
-        self.__is_stop = flag
+      self.__is_stop = flag
 
   def write_linetrace_slope(self, slope: Optional[float]) -> None:
     with self.__linetrace_lock:
-        self.__slope = slope
+      self.__slope = slope
 
   @property
   def linetrace_slope(self) -> Optional[float]:
     with self.__linetrace_lock:
-        return self.__slope
+      return self.__slope
 
   @property
   def linetrace_stop(self) -> bool:
     with self.__linetrace_lock:
-        return self.__is_stop
+      return self.__is_stop
+
 
 robot = Robot()
 

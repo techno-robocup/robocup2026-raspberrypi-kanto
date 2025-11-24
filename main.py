@@ -63,7 +63,6 @@ def calculate_motor_speeds(slope: float = None) -> tuple[int, int]:
   return motor_l, motor_r
 
 
-
 def signal_handler(sig, frame):
   """Handle SIGINT for graceful shutdown."""
   logger.info("Received shutdown signal")
@@ -71,8 +70,8 @@ def signal_handler(sig, frame):
   robot.send_speed()
   sys.exit(0)
 
-logger.debug("Objects Initialized")
 
+logger.debug("Objects Initialized")
 
 if __name__ == "__main__":
   # Register signal handler for graceful shutdown

@@ -10,12 +10,16 @@ from picamera2 import Picamera2, CompletedRequest, MappedArray
 # Robot reference - set by robot.py after initialization to avoid circular import
 robot = None
 
+
 def set_robot(robot_instance):
   """Set the robot reference. Called by robot.py after Robot initialization."""
   global robot
   robot = robot_instance
 
+
 logger = modules.logger.get_logger()
+
+
 class Camera:
   """Camera class for handling Picamera2 operations."""
 
@@ -58,20 +62,23 @@ class Camera:
       self.cam.stop()
       self.is_camera_running = False
 
+
 def Rescue_precallback_func(request: CompletedRequest) -> None:
   modules.logger.get_logger().info("Rescue Camera pre-callback triggered")
   with MappedArray(request, "lores") as mapped_array:
     image = mapped_array.array
     current_time = time.time()
-    cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg",image)
+    cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
     if robot is not None:
       robot.write_rescue_image(image)
+
 
 green_marks: List[Tuple[int, int, int, int]] = []
 green_black_detected: List[np.ndarray] = []
 green_contours: List[np.ndarray] = []
 
 red_contours: List[np.ndarray] = []
+
 
 def detect_green_marks(orig_image: np.ndarray,
                        blackline_image: np.ndarray) -> None:
@@ -122,9 +129,11 @@ def detect_green_marks(orig_image: np.ndarray,
                                                         h)
       green_black_detected.append(black_detections)
 
-      _draw_green_mark_debug(orig_image, x, y, w, h, center_x, center_y,                               black_detections)
+      _draw_green_mark_debug(orig_image, x, y, w, h, center_x, center_y,
+                             black_detections)
   if green_marks:
     cv2.imwrite(f"bin/{time.time():.3f}_green_marks_with_x.jpg", orig_image)
+
 
 def detect_red_marks(orig_image: np.ndarray) -> None:
   """Detect red marks and set stop_requested flag."""
@@ -169,6 +178,7 @@ def detect_red_marks(orig_image: np.ndarray) -> None:
   if count >= 3 and robot is not None:
     robot.write_linetrace_stop(True)
 
+
 def _check_black_lines_around_mark(blackline_image: np.ndarray, center_x: int,
                                    center_y: int, w: int, h: int) -> np.ndarray:
   """Check for black lines around a mark in four directions."""
@@ -180,36 +190,41 @@ def _check_black_lines_around_mark(blackline_image: np.ndarray, center_x: int,
   black_threshold = 0.75  # 75% of pixels must be black
 
   # Check bottom
-  roi_b = blackline_image[center_y +
-                          h // 2:min(center_y + h // 2 +
-                                     roi_height, consts.LINETRACE_CAMERA_LORES_HEIGHT),
-                          center_x - roi_width // 2:center_x + roi_width // 2]
-  if roi_b.size > 0 and np.sum(roi_b < consts.BLACK_WHITE_THRESHOLD) / roi_b.size <= black_threshold:
+  roi_b = blackline_image[
+      center_y + h // 2:min(center_y + h // 2 +
+                            roi_height, consts.LINETRACE_CAMERA_LORES_HEIGHT),
+      center_x - roi_width // 2:center_x + roi_width // 2]
+  if roi_b.size > 0 and np.sum(
+      roi_b < consts.BLACK_WHITE_THRESHOLD) / roi_b.size <= black_threshold:
     black_detections[0] = 1
 
   # Check top
   roi_t = blackline_image[max(center_y - h // 2 -
                               roi_height, 0):center_y - h // 2,
                           center_x - roi_width // 2:center_x + roi_width // 2]
-  if roi_t.size > 0 and np.sum(roi_t < consts.BLACK_WHITE_THRESHOLD) / roi_t.size <= black_threshold:
+  if roi_t.size > 0 and np.sum(
+      roi_t < consts.BLACK_WHITE_THRESHOLD) / roi_t.size <= black_threshold:
     black_detections[1] = 1
 
   # Check left
   roi_l = blackline_image[center_y - roi_height // 2:center_y + roi_height // 2,
                           max(center_x - w // 2 - roi_width, 0):center_x -
                           w // 2]
-  if roi_l.size > 0 and np.sum(roi_l < consts.BLACK_WHITE_THRESHOLD) / roi_l.size <= black_threshold:
+  if roi_l.size > 0 and np.sum(
+      roi_l < consts.BLACK_WHITE_THRESHOLD) / roi_l.size <= black_threshold:
     black_detections[2] = 1
 
   # Check right
   roi_r = blackline_image[center_y - roi_height // 2:center_y + roi_height // 2,
-                          center_x +
-                          w // 2:min(center_x + w // 2 +
-                                     roi_width, consts.LINETRACE_CAMERA_LORES_WIDTH)]
-  if roi_r.size > 0 and np.sum(roi_r < consts.BLACK_WHITE_THRESHOLD) / roi_r.size <= black_threshold:
+                          center_x + w //
+                          2:min(center_x + w // 2 +
+                                roi_width, consts.LINETRACE_CAMERA_LORES_WIDTH)]
+  if roi_r.size > 0 and np.sum(
+      roi_r < consts.BLACK_WHITE_THRESHOLD) / roi_r.size <= black_threshold:
     black_detections[3] = 1
 
   return black_detections
+
 
 def _draw_green_mark_debug(image: np.ndarray, x: int, y: int, w: int, h: int,
                            center_x: int, center_y: int,
@@ -233,6 +248,7 @@ def _draw_green_mark_debug(image: np.ndarray, x: int, y: int, w: int, h: int,
   if black_detections[3]:
     cv2.line(image, (center_x + 10, center_y - 10),
              (center_x + 10, center_y + 10), (255, 0, 0), 2)
+
 
 def find_best_contour(contours: List[np.ndarray], camera_x: int, camera_y: int,
                       last_center: int) -> Optional[np.ndarray]:
@@ -293,10 +309,12 @@ def find_best_contour(contours: List[np.ndarray], camera_x: int, camera_y: int,
     })
 
   # Sort candidates by area (larger first), then center, then bottom
-  candidates.sort(key=lambda x: (-x['area'], x['distance_from_center'], -x['y1']))
+  candidates.sort(
+      key=lambda x: (-x['area'], x['distance_from_center'], -x['y1']))
 
   # Return best contour (largest area, then closest to center, then highest y-coordinate)
   return candidates[0]['contour'] if candidates else None
+
 
 def calculate_contour_center(contour: np.ndarray) -> Tuple[int, int]:
   """Calculate the center point of a contour."""
@@ -311,6 +329,7 @@ def calculate_contour_center(contour: np.ndarray) -> Tuple[int, int]:
     cy = y + h // 2
 
   return cx, cy
+
 
 def calculate_slope(contour: np.ndarray, cx: int, cy: int) -> float:
   """Calculate the slope of the line for steering."""
@@ -328,6 +347,7 @@ def calculate_slope(contour: np.ndarray, cx: int, cy: int) -> float:
     logger.error(f"Error in calculate_slope: {e}")
     return 0.0
 
+
 def visualize_tracking(image: np.ndarray, contour: np.ndarray, cx: int,
                        cy: int) -> np.ndarray:
   """Create a visualization image showing tracking information."""
@@ -338,6 +358,7 @@ def visualize_tracking(image: np.ndarray, contour: np.ndarray, cx: int,
   cv2.line(vis_image, (0, h // 2), (w, h // 2), (255, 0, 0), 1)
   cv2.line(vis_image, (cx, 0), (cx, h), (255, 0, 0), 1)
   return vis_image
+
 
 def _draw_debug_contours(debug_image: np.ndarray) -> None:
   """Draw debug visualization for all detected contours."""
@@ -365,9 +386,11 @@ def _draw_debug_contours(debug_image: np.ndarray) -> None:
       cv2.line(debug_image, (center_x, center_y), (center_x + 10, center_y),
                (255, 0, 0), 2)
 
+
 LASTBLACKLINE_LOCK = threading.Lock()
 lastblackline = consts.LINETRACE_CAMERA_LORES_WIDTH // 2
 line_area: Optional[float] = None
+
 
 def reduce_contrast_v(image, factor=0.5):
   """Reduce contrast on V channel only (HSV).
@@ -381,6 +404,7 @@ def reduce_contrast_v(image, factor=0.5):
   hsv = cv2.merge([h, s, v])
   return cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
 
+
 def reduce_glare_clahe(image, clip_limit=2.0):
   """Use CLAHE on luminance to balance brightness and reduce glare."""
   lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
@@ -390,11 +414,13 @@ def reduce_glare_clahe(image, clip_limit=2.0):
   lab = cv2.merge([l, a, b])
   return cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
 
+
 def reduce_glare_combined(image, contrast_factor=0.5, clip_limit=2.0):
   """Combine contrast reduction (V channel) and CLAHE for glare reduction."""
   image = reduce_contrast_v(image, contrast_factor)
   image = reduce_glare_clahe(image, clip_limit)
   return image
+
 
 def Linetrace_Camera_Pre_callback(request):
   global lastblackline, LASTBLACKLINE_LOCK
@@ -403,40 +429,46 @@ def Linetrace_Camera_Pre_callback(request):
   try:
     with MappedArray(request, "lores") as m:
       image = m.array
-      h,w = image.shape[:2]
+      h, w = image.shape[:2]
       crop_w = int(w * 0.9)
       x_start = (w - crop_w) // 2
       image = image[:, x_start:x_start + crop_w]
-      image = cv2.resize(image,(w,h), interpolation=cv2.INTER_LINEAR)
+      image = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
       cv2.imwrite(f"bin/{current_time:.3f}_linetrace_origin.jpg", image)
       image = reduce_glare_combined(image)
-      cv2.imwrite(f"bin/{current_time:.3f}_linetrace_format.jpg",image)
-      gray_image = cv2.cvtColor(image,cv2.COLOR_RGB2GRAY)
-      _, binary_image = cv2.threshold(gray_image, consts.BLACK_WHITE_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
-      kernel = np.ones((10,10),np.uint8)
-      binary_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel, iterations=5)
-      cv2.imwrite(f"bin/{current_time:.3f}_linetrace_binary.jpg",binary_image)
+      cv2.imwrite(f"bin/{current_time:.3f}_linetrace_format.jpg", image)
+      gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+      _, binary_image = cv2.threshold(gray_image, consts.BLACK_WHITE_THRESHOLD,
+                                      255, cv2.THRESH_BINARY_INV)
+      kernel = np.ones((10, 10), np.uint8)
+      binary_image = cv2.morphologyEx(binary_image,
+                                      cv2.MORPH_CLOSE,
+                                      kernel,
+                                      iterations=5)
+      cv2.imwrite(f"bin/{current_time:.3f}_linetrace_binary.jpg", binary_image)
 
       detect_red_marks(image)
-      detect_green_marks(image,binary_image)
+      detect_green_marks(image, binary_image)
 
-      contours, _ = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+      contours, _ = cv2.findContours(binary_image, cv2.RETR_TREE,
+                                     cv2.CHAIN_APPROX_SIMPLE)
 
       if not contours:
         if robot is not None:
           robot.write_linetrace_slope(None)
         return
 
-      best_contour = find_best_contour(contours, consts.LINETRACE_CAMERA_LORES_WIDTH,
-                                         consts.LINETRACE_CAMERA_LORES_HEIGHT,
-                                         lastblackline)
+      best_contour = find_best_contour(contours,
+                                       consts.LINETRACE_CAMERA_LORES_WIDTH,
+                                       consts.LINETRACE_CAMERA_LORES_HEIGHT,
+                                       lastblackline)
 
       if best_contour is None:
         if robot is not None:
           robot.write_linetrace_slope(None)
         return
 
-      cx,cy = calculate_contour_center(best_contour)
+      cx, cy = calculate_contour_center(best_contour)
 
       global line_area
       line_area = cv2.contourArea(best_contour)
@@ -444,11 +476,11 @@ def Linetrace_Camera_Pre_callback(request):
       with LASTBLACKLINE_LOCK:
         lastblackline = cx
       if robot is not None:
-        robot.write_linetrace_slope(calculate_slope(best_contour,cx,cy))
+        robot.write_linetrace_slope(calculate_slope(best_contour, cx, cy))
 
-      debug_image = visualize_tracking(image,best_contour,cx,cy)
+      debug_image = visualize_tracking(image, best_contour, cx, cy)
       _draw_debug_contours(debug_image)
-      cv2.imwrite(f"bin/{current_time:.3f}_tracking.jpg",debug_image)
+      cv2.imwrite(f"bin/{current_time:.3f}_tracking.jpg", debug_image)
 
   except SystemExit:
     logger.error("SystemExit caught")

@@ -30,18 +30,24 @@ def clamp(value: int, min_val: int, max_val: int) -> int:
   return max(min_val, min(max_val, value))
 
 
-def calculate_motor_speeds(slope: float) -> tuple[int, int]:
+def calculate_motor_speeds(slope: float = None) -> tuple[int, int]:
   """
   Calculate left and right motor speeds based on line slope.
 
   Uses arctan to convert slope to angle, then calculates the difference
   from π/2 (vertical). This gives a normalized angular error for steering.
 
+  Args:
+    slope: Line slope value. If None, reads from robot.read_linetrace_slope().
+
   Angle interpretation:
   - angle = π/2: line is vertical (centered), go straight
   - angle < π/2: line tilts right, turn right
   - angle > π/2: line tilts left, turn left
   """
+  if slope is None:
+    slope = robot.linetrace_slope
+
   if slope is None:
     return BASE_SPEED, BASE_SPEED
 
@@ -59,39 +65,6 @@ def calculate_motor_speeds(slope: float) -> tuple[int, int]:
   return motor_l, motor_r
 
 
-def linetrace_loop():
-  """Main line trace control loop."""
-  logger.info("Starting line trace loop")
-
-  try:
-    while True:
-      # Read current slope from camera processing
-      slope = robot.linetrace_slope
-
-      # Calculate motor speeds based on slope
-      motor_l, motor_r = calculate_motor_speeds(slope)
-
-      # Set and send motor speeds
-      robot.set_speed(motor_l, motor_r)
-      robot.send_speed()
-
-      # Log for debugging
-      if slope is not None:
-        logger.debug(f"Slope: {slope:.2f}, Motors: L={motor_l}, R={motor_r}")
-      else:
-        logger.debug("No line detected - stopped")
-
-      # Control loop rate (~50Hz)
-      time.sleep(0.02)
-
-  except KeyboardInterrupt:
-    logger.info("Line trace interrupted by user")
-  finally:
-    # Stop motors when exiting
-    robot.set_speed(1500, 1500)
-    robot.send_speed()
-    logger.info("Motors stopped")
-
 
 def signal_handler(sig, frame):
   """Handle SIGINT for graceful shutdown."""
@@ -105,7 +78,11 @@ if __name__ == "__main__":
   # Register signal handler for graceful shutdown
   signal.signal(signal.SIGINT, signal_handler)
 
-  logger.info("Starting line trace program")
-  linetrace_loop()
+  logger.info("Starting program")
+  while True:
+    if not robot.linetrace_stop:
+      motorl, motorr = calculate_motor_speeds()
+      robot.set_speed(motorl, motorr)
+      robot.send_speed()
 
 logger.debug("Program Stop")

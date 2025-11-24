@@ -30,7 +30,7 @@ class Message:
     return f"{self.id} {self.message}"
 
   @property
-  def getId(self):
+  def Id(self):
     return self.__id
 
   @property
@@ -87,9 +87,9 @@ class uart_io:
             'ascii').strip()
         if message_str:
           retMessage = Message(message_str)
-          if retMessage.getId() == message.getId():
+          if retMessage.Id == message.Id:
             return retMessage.getMessage()
-          elif retMessage.getId() < message.getId():
+          elif retMessage.Id < message.Id:
             continue
           else:
             return False

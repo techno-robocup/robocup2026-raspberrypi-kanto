@@ -177,6 +177,14 @@ class Robot:
     with self.__linetrace_lock:
         self.__slope = slope
 
+  def read_linetrace_slope(self) -> Optional[float]:
+    with self.__linetrace_lock:
+        return self.__slope
+
+  def read_linetrace_stop(self) -> bool:
+    with self.__linetrace_lock:
+        return self.__is_stop
+
 robot = Robot()
 
 if __name__ == "__main__":

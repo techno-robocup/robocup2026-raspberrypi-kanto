@@ -88,6 +88,7 @@ class uart_io:
             'ascii').strip()
         if message_str:
           retMessage = Message(message_str)
+          logger.debug(f"Received message: {str(retMessage)}")
           if retMessage.Id == message.Id:
             return retMessage.Message
           elif retMessage.Id < message.Id:

@@ -27,7 +27,7 @@ class Message:
 
   @property
   def __str__(self):
-    return f"{self.id} {self.message}"
+    return f"{self.Id} {self.Message}"
 
   @property
   def Id(self):

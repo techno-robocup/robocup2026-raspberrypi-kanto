@@ -25,7 +25,7 @@ class Message:
       logger.get_logger().error(
           f"Invalid number of arguments to construct Message object {args}")
 
-  @property
+  # @property
   def __str__(self):
     return f"{self.Id} {self.Message}"
 

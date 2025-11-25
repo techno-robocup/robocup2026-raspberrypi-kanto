@@ -77,6 +77,7 @@ class uart_io:
     return None
 
   def send(self, message: str) -> bool | str:
+    self.__message_id_increment += 1
     return self.__send(Message(self.__message_id_increment, message))
 
   def __send(self, message: Message) -> bool | str:

@@ -114,6 +114,8 @@ class Robot:
     self.__uart_device: Optional[uart_io] = None
     self.__MOTOR_L = 1500
     self.__MOTOR_R = 1500
+    self.__MOTOR_ARM = 3072
+    self.__MOTOR_WIRE = 0
     self.__Linetrace_Camera = modules.camera.Camera(
         modules.constants.Linetrace_Camera_Port,
         modules.constants.Linetrace_Camera_Controls,
@@ -133,6 +135,10 @@ class Robot:
     self.__rescue_camera_image: Optional[npt.NDArray[np.uint8]] = None
     self.__Linetrace_Camera.start_cam()
     self.__Rescue_Camera.start_cam()
+    self.__rescue_lock = threading.Lock()
+    self.__rescue_angle:Optional[float] = None
+    self.__rescue_size:Optional[int] = None
+    self.__rescue_target:int = consts.TargetList.BLACK_BALL
     self.__slope = None
     self.__is_stop = False
     # Set robot reference in camera module to avoid circular import
@@ -152,12 +158,12 @@ class Robot:
 
   def set_arm(self, angle: int, wire: int):
     assert wire == 0 or wire == 1
-    self.__Rescue_angle = angle
-    self.__Rescue_wire = wire
+    self.__MOTOR_ARM = angle
+    self.__MOTOR_WIRE = wire
 
   def send_arm(self):
     return self.__uart_device.send(
-        f"Rescue {self.__Rescue_angle:4d}{self.__Rescue_wire}")
+        f"Rescue {self.__MOTOR_ARM:4d}{self.__MOTOR_WIRE}")
 
   @property
   def ultrasonic(self) -> List[int]:
@@ -176,6 +182,33 @@ class Robot:
   def rescue_image(self) -> Optional[npt.NDArray[np.uint8]]:
     with self.__rescue_camera_lock:
       return self.__rescue_camera_image
+
+  def write_rescue_angle(self, angle:float) -> None:
+    with self.__rescue_lock:
+      self.__rescue_angle = angle
+
+  def write_rescue_size(self, size:int) -> None:
+    with self.__rescue_lock:
+      self.__rescue_size = size
+
+  def write_rescue_target(self,target:int) -> None:
+    with self.__rescue_lock:
+      self.__rescue_target = target
+
+  @property
+  def rescue_angle(self) -> Optional[float]:
+    with self.__rescue_lock:
+      return self.__rescue_angle
+
+  @property
+  def rescue_size(self) -> Optional[int]:
+    with self.__rescue_lock:
+      return self.__rescue_size
+
+  @property
+  def rescue_target(self) -> int:
+    with self.rescue_lock:
+      return self.__rescue_target
 
   def write_linetrace_stop(self, flag: bool) -> None:
     with self.__linetrace_lock:

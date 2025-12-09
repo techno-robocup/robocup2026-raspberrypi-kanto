@@ -73,16 +73,17 @@ def signal_handler(sig, frame):
   robot.send_speed()
   sys.exit(0)
 
+
 def find_best_target() -> None:
   logger.debug("Find target")
-  yolo_results = consts.MODEL(robot.rescue_image,verbose=False)
+  yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
   current_time = time.time()
-  cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg",result_image)
+  cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg", result_image)
   if yolo_results is None or len(yolo_results) == 0:
-        logger.info("Target not found")
-        robot.write_rescue_angle(None)
-        robot.write_rescue_size(None)
-        return
+    logger.info("Target not found")
+    robot.write_rescue_angle(None)
+    robot.write_rescue_size(None)
+    return
   result_image = yolo_results[0].plot()
   boxes = yolo_results[0].boxes
   if boxes is None or len(boxes) == 0:
@@ -119,7 +120,8 @@ def find_best_target() -> None:
           best_target_w = w
           best_target_h = h
         logger.info(
-            f"Detected cls={consts.TargetList(cls).value}, area={area:.1f}, offset={dist:.1f}")
+            f"Detected cls={consts.TargetList(cls).value}, area={area:.1f}, offset={dist:.1f}"
+        )
       elif consts.TargetList.BLACK_BALL.value == robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
         logger.info("Override")
         robot.write_rescue_turning_angle(0)
@@ -136,19 +138,22 @@ def find_best_target() -> None:
           best_target_h = h
         robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
         logger.info(
-            f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}")
+            f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
+        )
     robot.write_rescue_angle(best_angle)
     robot.write_rescue_size(best_size)
+
 
 def catch_ball() -> int:
   logger.debug("Executing catch_ball()")
   # Store which ball type we're catching
-  logger.info(f"Caught ball type: {consts.TargetList(robot.rescue_target).name}")
+  logger.info(
+      f"Caught ball type: {consts.TargetList(robot.rescue_target).name}")
   robot.set_speed(1500, 1500)
   robot.set_arm(1400, 0)
   robot.send_speed()
   robot.send_arm()
-  robot.set_speed(1650,1650)
+  robot.set_speed(1650, 1650)
   prev_time = time.time()
   while time.time() - prev_time < 2:
     robot.send_speed()
@@ -173,11 +178,14 @@ def catch_ball() -> int:
   find_best_target()
   if robot.rescue_angle is None:
     logger.info("Catch successful")
-    robot.write_rescue_target(consts.TargetList.GREEN_CAGE.value if robot.rescue_target == consts.TargetList.SILVER_BALL.value else consts.TargetList.RED_CAGE.value)
+    robot.write_rescue_target(
+        consts.TargetList.GREEN_CAGE.value if robot.rescue_target == consts.
+        TargetList.SILVER_BALL.value else consts.TargetList.RED_CAGE.value)
     return 0
   else:
     logger.info("Catch failed")
     return 1
+
 
 def release_ball() -> None:
   logger.debug("Executing release_ball()")
@@ -188,10 +196,10 @@ def release_ball() -> None:
   robot.set_speed(1500, 1500)
   robot.send_speed()
   prev_time = time.time()
-  robot.set_speed(1400,1400)
+  robot.set_speed(1400, 1400)
   while time.time() - prev_time < 0.5:
     robot.send_speed()
-  robot.set_speed(1500,1500)
+  robot.set_speed(1500, 1500)
   robot.set_arm(1536, 0)
   robot.send_speed()
   prev_time = time.time()
@@ -212,17 +220,19 @@ def release_ball() -> None:
   robot.set_speed(1500, 1500)
   robot.send_speed()
 
+
 def change_position() -> int:
   logger.debug("Change position")
   prev_time = time.time()
-  robot.set_speed(1750,1250)
+  robot.set_speed(1750, 1250)
   while time.time() - prev_time < consts.TURN_30_TIME:
     robot.send_speed()
-  robot.set_speed(1500,1500)
+  robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
   logger.info(f"Turn degrees{robot.rescue_turning_angle}")
   return robot.rescue_turning_angle
+
 
 # def calculate_ball(angle: Optional[float] = None, size: Optional[int] = None) -> tuple[int, int]
 

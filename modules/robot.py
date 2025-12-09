@@ -136,10 +136,10 @@ class Robot:
     self.__Linetrace_Camera.start_cam()
     self.__Rescue_Camera.start_cam()
     self.__rescue_lock = threading.Lock()
-    self.__rescue_angle:Optional[float] = None
-    self.__rescue_size:Optional[int] = None
-    self.__rescue_target:int = consts.TargetList.SILVER_BALL
-    self.__rescue_turning_angle:int = 0
+    self.__rescue_angle: Optional[float] = None
+    self.__rescue_size: Optional[int] = None
+    self.__rescue_target: int = consts.TargetList.SILVER_BALL
+    self.__rescue_turning_angle: int = 0
     self.__slope = None
     self.__is_stop = False
     # Set robot reference in camera module to avoid circular import
@@ -176,7 +176,7 @@ class Robot:
 
   def write_rescue_image(self, image: npt.NDArray[np.uint8]) -> None:
     with self.__rescue_camera_lock:
-        self.__rescue_camera_image = image
+      self.__rescue_camera_image = image
     return None
 
   @property
@@ -184,19 +184,19 @@ class Robot:
     with self.__rescue_camera_lock:
       return self.__rescue_camera_image
 
-  def write_rescue_angle(self, angle:float) -> None:
+  def write_rescue_angle(self, angle: float) -> None:
     with self.__rescue_lock:
       self.__rescue_angle = angle
 
-  def write_rescue_size(self, size:int) -> None:
+  def write_rescue_size(self, size: int) -> None:
     with self.__rescue_lock:
       self.__rescue_size = size
 
-  def write_rescue_target(self, target:int) -> None:
+  def write_rescue_target(self, target: int) -> None:
     with self.__rescue_lock:
       self.__rescue_target = target
 
-  def write_rescue_turning_angle(self, angle:int) -> None:
+  def write_rescue_turning_angle(self, angle: int) -> None:
     with self.__rescue_lock:
       self.__rescue_turning_angle = angle
 

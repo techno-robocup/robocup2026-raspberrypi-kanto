@@ -431,7 +431,7 @@ def Linetrace_Camera_Pre_callback(request):
     with MappedArray(request, "lores") as m:
       image = m.array
       h, w = image.shape[:2]
-      crop_w = int(w * 0.9)
+      crop_w = int(w * 0.85)
       x_start = (w - crop_w) // 2
       image = image[:, x_start:x_start + crop_w]
       image = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)

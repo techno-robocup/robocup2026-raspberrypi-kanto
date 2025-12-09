@@ -169,8 +169,13 @@ class Robot:
 
   def write_rescue_image(self, image: npt.NDArray[np.uint8]) -> None:
     with self.__rescue_camera_lock:
-      self.__rescue_camera_image: Optional[npt.NDArray[np.uint8]] = image
+        self.__rescue_camera_image = image
     return None
+
+  @property
+  def rescue_image(self) -> Optional[npt.NDArray[np.uint8]]:
+    with self.__rescue_camera_lock:
+      return self.__rescue_camera_image
 
   def write_linetrace_stop(self, flag: bool) -> None:
     with self.__linetrace_lock:

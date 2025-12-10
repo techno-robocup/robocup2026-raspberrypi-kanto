@@ -24,6 +24,9 @@ BASE_SPEED = 1600
 MAX_SPEED = 2000
 MIN_SPEED = 1000
 KP = 15
+P = 0.4
+AP = 1
+WP = 0.3
 
 
 def clamp(value: int, min_val: int, max_val: int) -> int:
@@ -143,7 +146,6 @@ def find_best_target() -> None:
     robot.write_rescue_angle(best_angle)
     robot.write_rescue_size(best_size)
 
-
 def catch_ball() -> int:
   logger.debug("Executing catch_ball()")
   # Store which ball type we're catching
@@ -233,10 +235,29 @@ def change_position() -> int:
   logger.info(f"Turn degrees{robot.rescue_turning_angle}")
   return robot.rescue_turning_angle
 
+def calculate_ball(angle: Optional[float] = None, size: Optional[int] = None) -> tuple[int, int]:
+  if angle is None or size is None:
+    return 1500,1500
+  if abs(angle) > 60:
+    diff_angle = angle * P
+  else:
+    diff_angle = 0
+  if consts.BALL_CATCH_SIZE > size:
+    dist_term = (math.sqrt(consts.BALL_CATCH_SIZE) - math.sqrt(size)) * AP
+  dist_term = int(max(60,dist_term))
+  base_L = 1500 + diff_angle + dist_term
+  base_R = 1500 - diff_angle + dist_term
+  logger.info(f"Motor speed L{base_L} R{base_R}")
+  return base_L, base_R
 
-# def calculate_ball(angle: Optional[float] = None, size: Optional[int] = None) -> tuple[int, int]
-
-# def calculate_cage(angle: Optional[float] = None, size: Optional[int] = None) -> tuple[int, int]
+def calculate_cage(angle: Optional[float] = None, size: Optional[int] = None) -> tuple[int, int]:
+  if angle is None or size is None:
+    return 1500, 1500
+  diff_angle = angle * WP
+  base_L = 1500 + diff_angle + 150
+  base_R = 1500 - diff_angle + 150
+  logger.info(f"Motor speed L{base_L} R{base_R}")
+  return base_L, base_R
 
 logger.debug("Objects Initialized")
 
@@ -251,12 +272,12 @@ if __name__ == "__main__":
       # robot.set_speed(motorl, motorr)
       # robot.send_speed()
       prev = time.time()
+      robot.set_speed(1200, 1800)
       while time.time() - prev < 2:
-        robot.set_speed(1200, 1800)
         robot.send_speed()
+      robot.set_speed(1800, 1200)
       prev = time.time()
       while time.time() - prev < 2:
-        robot.set_speed(1800, 1200)
         robot.send_speed()
     else:
       logger.debug("Red stop")

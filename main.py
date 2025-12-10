@@ -236,23 +236,27 @@ def change_position() -> int:
   return robot.rescue_turning_angle
 
 def calculate_ball(angle: Optional[float] = None, size: Optional[int] = None) -> tuple[int, int]:
-  if robot.rescue_angle is None or robot.rescue_size is None:
+  if angle is None or size is None:
     return 1500,1500
-  if abs(robot.rescue_angle) > 60:
-    diff_angle = robot.rescue_angle * P
+  if abs(angle) > 60:
+    diff_angle = angle * P
   else:
     diff_angle = 0
-  if consts.BALL_CATCH_SIZE > robot.rescue_size:
-    dist_term = (math.sqrt(consts.BALL_CATCH_SIZE) - math.sqrt(robot.rescue_size)) * AP
+  if consts.BALL_CATCH_SIZE > size:
+    dist_term = (math.sqrt(consts.BALL_CATCH_SIZE) - math.sqrt(size)) * AP
   dist_term = int(max(60,dist_term))
   base_L = 1500 + diff_angle + dist_term
   base_R = 1500 - diff_angle + dist_term
+  logger.info(f"Motor speed L{base_L} R{base_R}")
   return base_L, base_R
 
 def calculate_cage(angle: Optional[float] = None, size: Optional[int] = None) -> tuple[int, int]:
-  diff_angle = robot.rescue_angle * WP
+  if angle is None or size is None:
+    return 1500, 1500
+  diff_angle = angle * WP
   base_L = 1500 + diff_angle + 150
   base_R = 1500 - diff_angle + 150
+  logger.info(f"Motor speed L{base_L} R{base_R}")
   return base_L, base_R
 
 logger.debug("Objects Initialized")

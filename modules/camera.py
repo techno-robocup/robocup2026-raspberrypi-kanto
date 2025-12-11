@@ -478,6 +478,7 @@ def Linetrace_Camera_Pre_callback(request):
       with LASTBLACKLINE_LOCK:
         lastblackline = cx
       if robot is not None:
+        logger.info(f"Current slope: {calculate_slope(best_contour, cx, cy)}")
         robot.write_linetrace_slope(calculate_slope(best_contour, cx, cy))
 
       debug_image = visualize_tracking(image, best_contour, cx, cy)

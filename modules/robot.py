@@ -132,6 +132,7 @@ class Robot:
     self.__Linetrace_Camera.start_cam()
     self.__Rescue_Camera.start_cam()
     self.__rescue_lock = threading.Lock()
+    self.__is_rescue_flag = False
     self.__rescue_angle: Optional[float] = None
     self.__rescue_size: Optional[int] = None
     self.__rescue_target: int = consts.TargetList.SILVER_BALL.value
@@ -185,6 +186,14 @@ class Robot:
   def rescue_image(self) -> Optional[npt.NDArray[np.uint8]]:
     with self.__rescue_camera_lock:
       return self.__rescue_camera_image
+
+  def write_is_rescue_flag(self, flag:bool) -> None:
+    with self.__rescue_lock:
+      self.__is_rescue_flag = flag
+
+  @property
+  def is_rescue_flag(self) -> bool:
+    return self.__is_rescue_flag
 
   def write_rescue_angle(self, angle: float) -> None:
     with self.__rescue_lock:

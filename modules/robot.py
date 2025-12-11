@@ -60,6 +60,7 @@ class uart_io:
   def __connect(self) -> None:
     logger.get_logger().info(f"Connecting to {self.__device_name}")
     while True:
+      assert self.__baud_rate != None
       self.__Serial_port = serial.Serial(self.__device_name,
                                          self.__baud_rate,
                                          timeout=self.__timeout)
@@ -68,7 +69,7 @@ class uart_io:
     return None
 
   def isConnected(self) -> bool:
-    return self.__Serial_port.isOpen
+    return self.__Serial_port.isOpen()
 
   def reConnect(self) -> None:
     if self.isConnected():

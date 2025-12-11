@@ -133,7 +133,7 @@ class Robot:
     self.__Rescue_Camera.start_cam()
     self.__rescue_lock = threading.Lock()
     self.__is_rescue_flag = False
-    self.__rescue_angle: Optional[float] = None
+    self.__rescue_offset: Optional[float] = None
     self.__rescue_size: Optional[int] = None
     self.__rescue_target: int = consts.TargetList.SILVER_BALL.value
     self.__rescue_turning_angle: int = 0
@@ -195,9 +195,9 @@ class Robot:
   def is_rescue_flag(self) -> bool:
     return self.__is_rescue_flag
 
-  def write_rescue_angle(self, angle: float) -> None:
+  def write_rescue_offset(self, angle: float) -> None:
     with self.__rescue_lock:
-      self.__rescue_angle = angle
+      self.__rescue_offset = angle
 
   def write_rescue_size(self, size: int) -> None:
     with self.__rescue_lock:
@@ -216,9 +216,9 @@ class Robot:
       self.__rescue_ball_flag = flag
 
   @property
-  def rescue_angle(self) -> Optional[float]:
+  def rescue_offset(self) -> Optional[float]:
     with self.__rescue_lock:
-      return self.__rescue_angle
+      return self.__rescue_offset
 
   @property
   def rescue_size(self) -> Optional[int]:

@@ -83,7 +83,7 @@ def find_best_target() -> None:
   current_time = time.time()
   if yolo_results is None or len(yolo_results) == 0:
     logger.info("Target not found")
-    robot.write_rescue_angle(None)
+    robot.write_rescue_offset(None)
     robot.write_rescue_size(None)
     return
   result_image = yolo_results[0].plot()
@@ -91,7 +91,7 @@ def find_best_target() -> None:
   boxes = yolo_results[0].boxes
   if boxes is None or len(boxes) == 0:
     logger.info("Target not found")
-    robot.write_rescue_angle(None)
+    robot.write_rescue_offset(None)
     robot.write_rescue_size(None)
     return
   else:
@@ -127,8 +127,8 @@ def find_best_target() -> None:
             is_bottom_third = best_target_y and best_target_y > (image_height *
                                                                  3 / 4)
             if best_target_w:
-              ball_left = robot.rescue_angle - best_target_w / 2 + image_width / 2
-              ball_right = robot.rescue_angle + best_target_w / 2 + image_width / 2
+              ball_left = robot.rescue_offset - best_target_w / 2 + image_width / 2
+              ball_right = robot.rescue_offset + best_target_w / 2 + image_width / 2
               includes_center = ball_left <= image_width / 2 <= ball_right
             else:
               includes_center = False
@@ -155,7 +155,7 @@ def find_best_target() -> None:
         logger.info(
             f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
-    robot.write_rescue_angle(best_angle)
+    robot.write_rescue_offset(best_angle)
     robot.write_rescue_size(best_size)
 
 
@@ -191,7 +191,7 @@ def catch_ball() -> int:
   robot.set_speed(1500, 1500)
   robot.send_speed()
   find_best_target()
-  if robot.rescue_angle is None:
+  if robot.rescue_offset is None:
     logger.info("Catch successful")
     robot.write_rescue_target(
         consts.TargetList.GREEN_CAGE.value if robot.rescue_target == consts.
@@ -293,19 +293,19 @@ if __name__ == "__main__":
   while True:
     if robot.is_rescue_flag:
       find_best_target()
-      if (robot.rescue_angle is None) or (robot.rescue_size is None):
+      if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
       else:
         if robot.rescue_target == consts.TargetList.EXIT.value:
           motorr = 1500
           motorl = 1500
         if robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
-          motorl, motorr = calculate_ball(robot.rescue_angle, robot.rescue_size)
+          motorl, motorr = calculate_ball(robot.rescue_offset, robot.rescue_size)
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
             # TODO: Retry
         else:
-          motorl, motorr = calculate_cage(robot.rescue_angle, robot.rescue_size)
+          motorl, motorr = calculate_cage(robot.rescue_offset, robot.rescue_size)
           if robot.rescue_size() >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
     else:
@@ -317,19 +317,19 @@ if __name__ == "__main__":
         logger.debug("Red stop")
     if robot.is_rescue_flag:
       find_best_target()
-      if (robot.rescue_angle is None) or (robot.rescue_size is None):
+      if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
       else:
         if robot.rescue_target == consts.TargetList.EXIT.value:
           motorr = 1500
           motorl = 1500
         if robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
-          motorl, motorr = calculate_ball(robot.rescue_angle, robot.rescue_size)
+          motorl, motorr = calculate_ball(robot.rescue_offset, robot.rescue_size)
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
             # TODO: Retry
         else:
-          motorl, motorr = calculate_cage(robot.rescue_angle, robot.rescue_size)
+          motorl, motorr = calculate_cage(robot.rescue_offset, robot.rescue_size)
           if robot.rescue_size() >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
     else:

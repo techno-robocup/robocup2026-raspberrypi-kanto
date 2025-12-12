@@ -20,16 +20,17 @@ uart_dev.connect(uart_devices[0].device, consts.UART_BAUD_RATE,
                  consts.UART_TIMEOUT)
 robot.set_uart_device(uart_dev)
 
-BASE_SPEED = 1650
+BASE_SPEED = 1730
 MAX_SPEED = 2000
 MIN_SPEED = 1000
 KP = 250
+DP = 100
 P = 0.4
 AP = 1
 WP = 0.3
 
 
-def clamp(value: int, min_val: int, max_val: int) -> int:
+def clamp(value: int, min_val: int = 1000, max_val: int = 2000) -> int:
   """Clamp value between min and max."""
   return max(min_val, min(max_val, value))
 
@@ -63,8 +64,12 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
 
   steering = int(KP * angle_error)
 
-  motor_l = clamp(BASE_SPEED - steering, MIN_SPEED, MAX_SPEED)
-  motor_r = clamp(BASE_SPEED + steering, MIN_SPEED, MAX_SPEED)
+  motor_l = clamp(
+      clamp(int(BASE_SPEED - abs(angle_error)**4 * DP), 1500, 2000) - steering,
+      MIN_SPEED, MAX_SPEED)
+  motor_r = clamp(
+      clamp(int(BASE_SPEED - abs(angle_error)**4 * DP), 1500, 2000) + steering,
+      MIN_SPEED, MAX_SPEED)
 
   return motor_l, motor_r
 
@@ -271,7 +276,6 @@ def calculate_ball(angle: Optional[float] = None,
                                                     MAX_SPEED)
 
 
-
 def calculate_cage(angle: Optional[float] = None,
                    size: Optional[int] = None) -> tuple[int, int]:
   if angle is None or size is None:
@@ -286,7 +290,6 @@ def calculate_cage(angle: Optional[float] = None,
                                                     MAX_SPEED)
 
 
-
 logger.debug("Objects Initialized")
 
 if __name__ == "__main__":
@@ -295,7 +298,11 @@ if __name__ == "__main__":
 
   logger.info("Starting program")
   while True:
-    if True:
+    robot.update_button_stat()
+    robot.send_speed()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+    elif robot.is_rescue_flag:
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
@@ -305,14 +312,14 @@ if __name__ == "__main__":
           motorr = 1500
           robot.set_speed(motorl, motorr)
         if robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
-          motorl, motorr = calculate_ball(robot.rescue_offset, robot.rescue_size)
-          robot.set_speed(motorl, motorr)
+          motorl, motorr = calculate_ball(robot.rescue_offset,
+                                          robot.rescue_size)
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
             # TODO: Retry
         else:
-          motorl, motorr = calculate_cage(robot.rescue_offset, robot.rescue_size)
-          robot.set_speed(motorl, motorr)
+          motorl, motorr = calculate_cage(robot.rescue_offset,
+                                          robot.rescue_size)
           if robot.rescue_size >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
       robot.send_speed()
@@ -320,7 +327,6 @@ if __name__ == "__main__":
       if not robot.linetrace_stop:
         motorl, motorr = calculate_motor_speeds()
         robot.set_speed(motorl, motorr)
-        robot.send_speed()
       else:
         logger.debug("Red stop")
 logger.debug("Program Stop")

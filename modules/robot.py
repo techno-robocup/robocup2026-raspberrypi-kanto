@@ -140,6 +140,7 @@ class Robot:
     self.__rescue_ball_flag = False
     self.__slope = None
     self.__is_stop = False
+    self.__robot_stop: bool = False
     # Set robot reference in camera module to avoid circular import
     modules.camera.set_robot(self)
 
@@ -154,6 +155,8 @@ class Robot:
 
   def send_speed(self):
     assert self.__uart_device != None
+    assert isinstance(self.__MOTOR_L, int)
+    assert isinstance(self.__MOTOR_R, int)
     return self.__uart_device.send(f"MOTOR {self.__MOTOR_L} {self.__MOTOR_R}")
 
   def set_arm(self, angle: int, wire: int):
@@ -215,6 +218,11 @@ class Robot:
     with self.__rescue_lock:
       self.__rescue_ball_flag = flag
 
+  def update_button_stat(self) -> None:
+    response = self.__uart_device.send("GET button")
+    self.__robot_stop = response == "OFF"
+    return None
+
   @property
   def rescue_offset(self) -> Optional[float]:
     with self.__rescue_lock:
@@ -257,6 +265,10 @@ class Robot:
   def linetrace_stop(self) -> bool:
     with self.__linetrace_lock:
       return self.__is_stop
+
+  @property
+  def robot_stop(self) -> bool:
+    return self.__robot_stop
 
 
 robot = Robot()

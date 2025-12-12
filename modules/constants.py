@@ -73,7 +73,7 @@ MIN_GREEN_AREA = 200
 MIN_RED_AREA = 200
 
 TURN_180_TIME = 12
-TURN_30_TIME = 3
+TURN_30_TIME = 1.5
 
 lower_green = np.array([20, 130, 90])
 upper_green = np.array([100, 255, 255])

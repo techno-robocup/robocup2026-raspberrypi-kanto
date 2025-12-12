@@ -278,7 +278,6 @@ def find_best_target() -> None:
       elif consts.TargetList.BLACK_BALL.value == robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
         logger.info("Override")
         robot.write_rescue_turning_angle(0)
-        robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
         x_center, y_center, w, h = map(float, box.xywh[0])
         dist = x_center - cx
         area = w * h
@@ -426,7 +425,10 @@ def release_ball() -> bool:
     robot.send_speed()
   robot.set_speed(1500, 1500)
   robot.send_speed()
-  return True  # Completed successfully
+  if robot.rescue_target == consts.TargetList.GREEN_CAGE.value:
+    robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
+  else:
+    robot.write_rescue_target(consts.TargetList.BLACK_BALL)
 
 
 def change_position() -> bool:
@@ -500,6 +502,12 @@ if __name__ == "__main__":
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
+        if robot.rescue_turning_angle > 720:
+          robot.write_rescue_target(consts.TargetList.EXIT.value)
+        elif robot.rescue_turning_angle > 360:
+          robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
+        else:
+          robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
       else:
         if robot.rescue_target == consts.TargetList.EXIT.value:
           motorl = 1500

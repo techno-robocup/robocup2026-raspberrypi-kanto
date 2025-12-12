@@ -135,6 +135,11 @@ def detect_green_marks(orig_image: np.ndarray,
   if green_marks:
     cv2.imwrite(f"bin/{time.time():.3f}_green_marks_with_x.jpg", orig_image)
 
+  # Write to robot instance
+  if robot is not None:
+    robot.write_green_marks(green_marks)
+    robot.write_green_black_detected(green_black_detected)
+
 
 def detect_red_marks(orig_image: np.ndarray) -> None:
   """Detect red marks and set stop_requested flag."""

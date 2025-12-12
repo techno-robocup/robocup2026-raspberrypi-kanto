@@ -141,6 +141,10 @@ class Robot:
     self.__slope = None
     self.__is_stop = False
     self.__robot_stop: bool = False
+    # Green mark detection state
+    self.__green_marks_lock = threading.Lock()
+    self.__green_marks: List[tuple[int, int, int, int]] = []
+    self.__green_black_detected: List[np.ndarray] = []
     # Set robot reference in camera module to avoid circular import
     modules.camera.set_robot(self)
 
@@ -265,6 +269,28 @@ class Robot:
   def linetrace_stop(self) -> bool:
     with self.__linetrace_lock:
       return self.__is_stop
+
+  def write_green_marks(self, marks: List[tuple[int, int, int, int]]) -> None:
+    """Write detected green marks."""
+    with self.__green_marks_lock:
+      self.__green_marks = marks.copy()
+
+  def write_green_black_detected(self, detections: List[np.ndarray]) -> None:
+    """Write green mark black line detections."""
+    with self.__green_marks_lock:
+      self.__green_black_detected = detections.copy()
+
+  @property
+  def green_marks(self) -> List[tuple[int, int, int, int]]:
+    """Get detected green marks."""
+    with self.__green_marks_lock:
+      return self.__green_marks.copy()
+
+  @property
+  def green_black_detected(self) -> List[np.ndarray]:
+    """Get green mark black line detections."""
+    with self.__green_marks_lock:
+      return self.__green_black_detected.copy()
 
   @property
   def robot_stop(self) -> bool:

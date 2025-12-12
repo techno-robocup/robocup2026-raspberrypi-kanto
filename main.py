@@ -267,7 +267,6 @@ def calculate_ball(angle: Optional[float] = None,
                                                     MAX_SPEED)
 
 
-
 def calculate_cage(angle: Optional[float] = None,
                    size: Optional[int] = None) -> tuple[int, int]:
   if angle is None or size is None:
@@ -280,7 +279,6 @@ def calculate_cage(angle: Optional[float] = None,
                                                     MAX_SPEED)
 
 
-
 logger.debug("Objects Initialized")
 
 if __name__ == "__main__":
@@ -289,7 +287,12 @@ if __name__ == "__main__":
 
   logger.info("Starting program")
   while True:
-    if robot.is_rescue_flag:
+    robot.update_button_stat()
+    robot.send_speed()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+      robot.send_speed()
+    elif robot.is_rescue_flag:
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
@@ -298,19 +301,20 @@ if __name__ == "__main__":
           motorl = 1500
           motorr = 1500
         if robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
-          motorl, motorr = calculate_ball(robot.rescue_offset, robot.rescue_size)
+          motorl, motorr = calculate_ball(robot.rescue_offset,
+                                          robot.rescue_size)
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
             # TODO: Retry
         else:
-          motorl, motorr = calculate_cage(robot.rescue_offset, robot.rescue_size)
+          motorl, motorr = calculate_cage(robot.rescue_offset,
+                                          robot.rescue_size)
           if robot.rescue_size >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
     else:
       if not robot.linetrace_stop:
         motorl, motorr = calculate_motor_speeds()
         robot.set_speed(motorl, motorr)
-        robot.send_speed()
       else:
         logger.debug("Red stop")
 logger.debug("Program Stop")

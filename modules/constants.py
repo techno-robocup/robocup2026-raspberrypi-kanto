@@ -76,6 +76,13 @@ MIN_RED_AREA = 200
 TURN_180_TIME = 12
 TURN_30_TIME = 1.5
 
+# Green mark intersection turning times (seconds)
+GREEN_MARK_APPROACH_TIME = 0.5
+TURN_90_LEFT_TIME = 1.5
+TURN_90_RIGHT_TIME = 1.5
+GREEN_MARK_TURN_180_TIME = 3.5
+GREEN_MARK_Y_THRESHOLD_RATIO = 2 / 3  # Mark must be in bottom third
+
 lower_green = np.array([20, 130, 90])
 upper_green = np.array([100, 255, 255])
 

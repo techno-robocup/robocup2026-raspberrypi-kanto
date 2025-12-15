@@ -67,14 +67,19 @@ class Camera:
 def Rescue_precallback_func(request: CompletedRequest) -> None:
   global robot
   modules.logger.get_logger().info("Rescue Camera pre-callback triggered")
-  with MappedArray(request, "lores") as mapped_array:
-    image = mapped_array.array
-    image = cv2.rotate(image, cv2.ROTATE_180)
-    current_time = time.time()
-    assert isinstance(robot, modules.robot.Robot)
-    cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
-    robot.write_rescue_image(image)
-
+  try:
+    with MappedArray(request, "lores") as m:
+      image = m.array
+      image = cv2.rotate(image, cv2.ROTATE_180)
+      current_time = time.time()
+      assert isinstance(robot, modules.robot.Robot)
+      cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
+      robot.write_rescue_image(image)
+  except SystemExit:
+    logger.error("SystemExit caught")
+    raise
+  except Exception as e:
+    logger.error(f"Error in Rescue: {e}")
 
 green_marks: List[Tuple[int, int, int, int]] = []
 green_black_detected: List[np.ndarray] = []

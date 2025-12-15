@@ -219,13 +219,13 @@ def find_best_target() -> None:
   logger.debug("Find target")
   yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
   current_time = time.time()
+  result_image = yolo_results[0].plot()
+  cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg", result_image)
   if yolo_results is None or len(yolo_results) == 0:
     logger.info("Target not found")
     robot.write_rescue_offset(None)
     robot.write_rescue_size(None)
     return
-  result_image = yolo_results[0].plot()
-  cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg", result_image)
   boxes = yolo_results[0].boxes
   if boxes is None or len(boxes) == 0:
     logger.info("Target not found")

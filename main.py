@@ -20,11 +20,11 @@ uart_dev.connect(uart_devices[0].device, consts.UART_BAUD_RATE,
                  consts.UART_TIMEOUT)
 robot.set_uart_device(uart_dev)
 
-BASE_SPEED = 1730
+BASE_SPEED = 1750
 MAX_SPEED = 2000
 MIN_SPEED = 1000
-KP = 250
-DP = 100
+KP = 200
+DP = 150
 P = 0.4
 AP = 1
 WP = 0.3
@@ -493,10 +493,6 @@ if __name__ == "__main__":
   signal.signal(signal.SIGINT, signal_handler)
 
   logger.info("Starting program")
-  robot.set_speed(1500, 1500)
-  robot.set_arm(3072, 0)
-  robot.send_speed()
-  robot.send_arm()
   while True:
     robot.update_button_stat()
     robot.send_speed()

@@ -178,7 +178,7 @@ class Robot:
   def send_arm(self):
     assert self.__uart_device != None
     return self.__uart_device.send(
-        f"Rescue {self.__MOTOR_ARM:4d}{self.__MOTOR_WIRE}")
+        f"Rescue {self.__MOTOR_ARM:4d} {self.__MOTOR_WIRE}")
 
   @property
   def ultrasonic(self) -> List[int]:

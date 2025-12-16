@@ -290,7 +290,9 @@ def find_best_target() -> None:
   logger.debug("Find target")
   yolo_results = robot.rescue_yolo_result# TODO: Not working
   current_time = time.time()
-  result_image = yolo_results[0].plot()
+  result_image = robot.rescue_image
+  if yolo_results:
+    result_image = yolo_results[0].plot()
   cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg", result_image)
   if yolo_results is None or len(yolo_results) == 0:
     logger.info("Target not found")

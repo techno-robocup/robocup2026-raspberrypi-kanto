@@ -574,7 +574,7 @@ if __name__ == "__main__":
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
     elif True:
-      run_yolo()
+      running_yolo()
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()

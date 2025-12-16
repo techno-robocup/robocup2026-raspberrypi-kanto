@@ -21,6 +21,7 @@ uart_dev.connect(uart_devices[0].device, consts.UART_BAUD_RATE,
 robot.set_uart_device(uart_dev)
 
 BASE_SPEED = 1750
+TURNING_BASE_SPEED = 1650
 MAX_SPEED = 2000
 MIN_SPEED = 1000
 KP = 200
@@ -145,7 +146,7 @@ def execute_green_mark_turn() -> bool:
         robot.send_speed()
         logger.info("Turn interrupted by button during 180° turn")
         return False
-      robot.set_speed(1750, 1250)  # Turn left
+      robot.set_speed(TURNING_BASE_SPEED, 3000 - TURNING_BASE_SPEED)  # Turn left
       robot.send_speed()
       # Only check for line crossing after delay has passed
       if elapsed > consts.TURN_CHECK_DELAY:
@@ -175,7 +176,7 @@ def execute_green_mark_turn() -> bool:
         robot.send_speed()
         logger.info("Turn interrupted by button during 90° left turn")
         return False
-      robot.set_speed(1750, 1250)  # Turn left
+      robot.set_speed(TURNING_BASE_SPEED, 3000 - TURNING_BASE_SPEED)  # Turn left
       robot.send_speed()
       # Only check for line crossing after delay has passed
       if elapsed > consts.TURN_CHECK_DELAY:
@@ -205,7 +206,7 @@ def execute_green_mark_turn() -> bool:
         robot.send_speed()
         logger.info("Turn interrupted by button during 90° right turn")
         return False
-      robot.set_speed(1200, 1750)  # Turn right
+      robot.set_speed(3000 - TURNING_BASE_SPEED, TURNING_BASE_SPEED)  # Turn right
       robot.send_speed()
       # Only check for line crossing after delay has passed
       if elapsed > consts.TURN_CHECK_DELAY:

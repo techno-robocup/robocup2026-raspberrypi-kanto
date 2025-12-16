@@ -29,6 +29,8 @@ P = 0.4
 AP = 1
 WP = 0.3
 
+last_yolo_time = 0
+
 
 def clamp(value: int, min_val: int = 1000, max_val: int = 2000) -> int:
   """Clamp value between min and max."""
@@ -215,9 +217,18 @@ def signal_handler(sig, frame):
   sys.exit(0)
 
 
+def run_yolo() -> bool:
+  logger.debug("yolo")
+  if time.time() - last_yolo_time > 0.1:
+    yolo_result = consts.MODEL(robot.rescue_image, verbose=False)
+    robot.write_rescue_yolo_result = yolo_result
+    return 0
+  return 0
+
+
 def find_best_target() -> None:
   logger.debug("Find target")
-  yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
+  yolo_results = robot.rescue_yolo_result# TODO: Not working
   current_time = time.time()
   result_image = yolo_results[0].plot()
   cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg", result_image)
@@ -504,16 +515,17 @@ if __name__ == "__main__":
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
     elif True:
+      run_yolo()
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
-        if change_position():
-          robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
-          if robot.rescue_turning_angle > 720:
-            robot.write_rescue_target(consts.TargetList.EXIT.value)
-          elif robot.rescue_turning_angle > 360:
-            robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
-          else:
-            robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
+        change_position()
+        robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
+        if robot.rescue_turning_angle > 720:
+          robot.write_rescue_target(consts.TargetList.EXIT.value)
+        elif robot.rescue_turning_angle > 360:
+          robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
+        else:
+          robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
       else:
         if robot.rescue_target == consts.TargetList.EXIT.value:
           motorl = 1500

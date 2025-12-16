@@ -139,7 +139,7 @@ class Robot:
     self.__rescue_target: int = consts.TargetList.SILVER_BALL.value
     self.__rescue_turning_angle: int = 0
     self.__rescue_ball_flag = False
-    self.__rescue_yolo_result = None
+    self.__rescue_yolo_result:List = None
     self.__slope = None
     self.__is_stop = False
     self.__robot_stop: bool = False

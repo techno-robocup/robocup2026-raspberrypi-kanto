@@ -205,7 +205,6 @@ class Robot:
       return self.__rescue_camera_image
 
 
-  @property
   def write_rescue_yolo_result(self, result: List) -> None:
     with self.__rescue_lock:
       self.__rescue_yolo_result = result.copy()

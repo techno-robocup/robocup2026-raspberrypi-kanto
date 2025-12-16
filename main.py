@@ -280,6 +280,7 @@ def running_yolo() -> bool:
   logger.debug("yolo")
   if time.time() - last_yolo_time > 0.1:
     yolo_result = consts.MODEL(robot.rescue_image, verbose=False)
+    assert isinstance(robot, modules.robot.Robot)
     robot.write_rescue_yolo_result(yolo_result)
     return True
   return True

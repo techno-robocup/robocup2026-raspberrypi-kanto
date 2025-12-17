@@ -282,13 +282,14 @@ def running_yolo() -> bool:
     yolo_result = consts.MODEL(robot.rescue_image, verbose=False)
     assert isinstance(robot, modules.robot.Robot)
     robot.write_rescue_yolo_result(yolo_result)
+    last_yolo_time = time.time()
     return True
   return True
 
 
 def find_best_target() -> None:
   logger.debug("Find target")
-  yolo_results = robot.rescue_yolo_result# TODO: Not working
+  yolo_results = robot.rescue_yolo_result()# TODO: Not working
   current_time = time.time()
   result_image = robot.rescue_image
   if yolo_results and isinstance(yolo_results, list) and len(yolo_results) > 0:

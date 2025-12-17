@@ -1,6 +1,6 @@
 import modules.constants as consts
 import modules.logger as logger
-from typing import Optional, List
+from typing import Optional, List, Any
 import serial
 import serial.tools.list_ports
 import modules.camera
@@ -205,11 +205,15 @@ class Robot:
       return self.__rescue_camera_image
 
 
-  def write_rescue_yolo_result(self, result: Optional[List]) -> None:
+  def write_rescue_yolo_result(self, result: Optional[List[Any]]) -> None:
     with self.__rescue_lock:
-      self.__rescue_yolo_result = result.copy()
+        if result is None:
+            self.__rescue_yolo_result = None
+        else:
+            self.__rescue_yolo_result = result.copy()
 
-  def rescue_yolo_result(self) -> Optional[List]:
+  @property
+  def rescue_yolo_result(self) -> Optional[List[Any]]:
     with self.__rescue_lock:
       return self.__rescue_yolo_result
 

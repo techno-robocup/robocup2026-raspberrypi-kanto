@@ -530,13 +530,13 @@ def change_position() -> bool:
   prev_time = time.time()
   robot.set_speed(1750, 1250)
   while time.time() - prev_time < consts.TURN_30_TIME:
+    robot.send_speed()
     robot.update_button_stat()
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
       logger.info("Position change interrupted by button")
       return False
-    robot.send_speed()
   robot.set_speed(1500, 1500)
   robot.send_speed()
   # robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
@@ -544,8 +544,9 @@ def change_position() -> bool:
   return True  # Completed successfully
 
 
-def calculate_ball(angle: Optional[float] = None,
-                   size: Optional[int] = None) -> tuple[int, int]:
+def calculate_ball() -> tuple[int, int]:
+  angle = robot.rescue_offset
+  size = robot.rescue_size
   if angle is None or size is None:
     return 1500, 1500
   diff_angle = 0
@@ -566,8 +567,9 @@ def calculate_ball(angle: Optional[float] = None,
                                                     MAX_SPEED)
 
 
-def calculate_cage(angle: Optional[float] = None,
-                   size: Optional[int] = None) -> tuple[int, int]:
+def calculate_cage() -> tuple[int, int]:
+  angle = robot.rescue_offset
+  size = robot.rescue_size
   if angle is None or size is None:
     return 1500, 1500
   diff_angle = angle * WP
@@ -579,8 +581,9 @@ def calculate_cage(angle: Optional[float] = None,
   return clamp(base_L, MIN_SPEED, MAX_SPEED), clamp(base_R, MIN_SPEED,
                                                     MAX_SPEED)
 
-def calculate_exit(angle: Optional[float] = None,
-                   size: Optional[int] = None) -> tuple[int, int]:
+def calculate_exit() -> tuple[int, int]:
+  angle = robot.rescue_offset
+  size = robot.rescue_size
   if angle is None or size is None:
     return 1500, 1500
   diff_angle = angle * P
@@ -623,17 +626,15 @@ if __name__ == "__main__":
           motorl = 1500
           motorr = 1500
           robot.set_speed(motorl, motorr)
-        if robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
-          motorl, motorr = calculate_ball(robot.rescue_offset,
-                                          robot.rescue_size)
+        elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
+          motorl, motorr = calculate_ball()
           robot.set_speed(motorl, motorr)
           robot.send_speed()
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
             # TODO: Retry
         else:
-          motorl, motorr = calculate_cage(robot.rescue_offset,
-                                          robot.rescue_size)
+          motorl, motorr = calculate_cage()
           robot.set_speed(motorl, motorr)
           robot.send_speed()
           if robot.rescue_size >= consts.BALL_CATCH_SIZE * 3.8:

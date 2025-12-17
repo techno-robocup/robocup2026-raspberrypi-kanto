@@ -286,21 +286,26 @@ def signal_handler(sig, frame):
   sys.exit(0)
 
 
-def running_yolo() -> bool:
-  global last_yolo_time
-  logger.debug("yolo")
-  if time.time() - last_yolo_time > 0.1:
-    yolo_result = consts.MODEL(robot.rescue_image, verbose=False)
-    assert isinstance(robot, modules.robot.Robot)
-    robot.write_rescue_yolo_result(yolo_result)
-    last_yolo_time = time.time()
-    return True
-  return True
+# def running_yolo() -> bool:
+#   global last_yolo_time
+#   logger.debug("yolo")
+#   if time.time() - last_yolo_time > 0.1:
+#     yolo_result = consts.MODEL(robot.rescue_image, verbose=False)
+#     assert isinstance(robot, modules.robot.Robot)
+#     robot.write_rescue_yolo_result(yolo_result)
+#     last_yolo_time = time.time()
+#     return True
+#   return True
 
 
 def find_best_target() -> None:
+  global last_yolo_time
+  yolo_results = None
+  if time.time() - last_yolo_time > 0.1:
+    yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
+    last_yolo_time = time.time()
   logger.debug("Find target")
-  yolo_results = robot.rescue_yolo_result()# TODO: Not working
+  # yolo_results = robot.rescue_yolo_result()# TODO: Not working
   current_time = time.time()
   result_image = robot.rescue_image
   if yolo_results and isinstance(yolo_results, list) and len(yolo_results) > 0:
@@ -602,7 +607,7 @@ if __name__ == "__main__":
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
     elif True:
-      running_yolo()
+      # running_yolo()
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()

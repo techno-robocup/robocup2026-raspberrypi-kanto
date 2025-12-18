@@ -9,7 +9,7 @@ PASSWORD="${PASSWORD:-techno}"
 WIFI_SSID="${WIFI_SSID:-rotarymars}"
 WIFI_PASSWORD="${WIFI_PASSWORD:-rotarymars}"
 WIFI_COUNTRY="${WIFI_COUNTRY:-JP}"
-HOSTNAME="${HOSTNAME:-roboberry}"
+PI_HOSTNAME="${PI_HOSTNAME:-roboberry}"
 
 # Colors for output
 RED='\033[0;31m'

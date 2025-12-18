@@ -1,14 +1,14 @@
 #!/bin/bash
-set -e  # Exit on error
+set -e # Exit on error
 
 # Configuration variables
 PATH_TO_ROOTFS="${PATH_TO_ROOTFS:-/media/rotarymars/rootfs}"
 PATH_TO_BOOTFS="${PATH_TO_BOOTFS:-/media/rotarymars/bootfs}"
-USERNAME="${USERNAME:-newuser}"
-PASSWORD="${PASSWORD:-yourpassword}"
+USERNAME="${USERNAME:-robo}"
+PASSWORD="${PASSWORD:-techno}"
 WIFI_SSID="${WIFI_SSID:-rotarymars}"
 WIFI_PASSWORD="${WIFI_PASSWORD:-rotarymars}"
-WIFI_COUNTRY="${WIFI_COUNTRY:-US}"
+WIFI_COUNTRY="${WIFI_COUNTRY:-JP}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -18,32 +18,32 @@ NC='\033[0m' # No Color
 
 # Helper functions
 print_success() {
-    echo -e "${GREEN}[✓]${NC} $1"
+  echo -e "${GREEN}[✓]${NC} $1"
 }
 
 print_error() {
-    echo -e "${RED}[✗]${NC} $1"
+  echo -e "${RED}[✗]${NC} $1"
 }
 
 print_info() {
-    echo -e "${YELLOW}[i]${NC} $1"
+  echo -e "${YELLOW}[i]${NC} $1"
 }
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
-    print_error "This script must be run as root (use sudo)"
-    exit 1
+  print_error "This script must be run as root (use sudo)"
+  exit 1
 fi
 
 # Check if paths exist
 if [ ! -d "$PATH_TO_ROOTFS" ]; then
-    print_error "Root filesystem not found at $PATH_TO_ROOTFS"
-    exit 1
+  print_error "Root filesystem not found at $PATH_TO_ROOTFS"
+  exit 1
 fi
 
 if [ ! -d "$PATH_TO_BOOTFS" ]; then
-    print_error "Boot filesystem not found at $PATH_TO_BOOTFS"
-    exit 1
+  print_error "Boot filesystem not found at $PATH_TO_BOOTFS"
+  exit 1
 fi
 
 print_info "Starting Raspberry Pi configuration..."
@@ -62,45 +62,45 @@ ENCRYPTED=$(openssl passwd -6 "$PASSWORD")
 
 # Check if user already exists in passwd
 if grep -q "^$USERNAME:" "${PATH_TO_ROOTFS}/etc/passwd" 2>/dev/null; then
-    print_info "User $USERNAME already exists in passwd, skipping..."
+  print_info "User $USERNAME already exists in passwd, skipping..."
 else
-    echo "$USERNAME:x:1001:1001:New User,,,:/home/$USERNAME:/bin/bash" >> "${PATH_TO_ROOTFS}/etc/passwd"
-    print_success "Added user to /etc/passwd"
+  echo "$USERNAME:x:1001:1001:New User,,,:/home/$USERNAME:/bin/bash" >>"${PATH_TO_ROOTFS}/etc/passwd"
+  print_success "Added user to /etc/passwd"
 fi
 
 # Check if user already exists in shadow
 if grep -q "^$USERNAME:" "${PATH_TO_ROOTFS}/etc/shadow" 2>/dev/null; then
-    print_info "User $USERNAME already exists in shadow, skipping..."
+  print_info "User $USERNAME already exists in shadow, skipping..."
 else
-    echo "$USERNAME:$ENCRYPTED:19000:0:99999:7:::" >> "${PATH_TO_ROOTFS}/etc/shadow"
-    print_success "Added user to /etc/shadow"
+  echo "$USERNAME:$ENCRYPTED:19000:0:99999:7:::" >>"${PATH_TO_ROOTFS}/etc/shadow"
+  print_success "Added user to /etc/shadow"
 fi
 
 # Check if group already exists
 if grep -q "^$USERNAME:" "${PATH_TO_ROOTFS}/etc/group" 2>/dev/null; then
-    print_info "Group $USERNAME already exists, skipping..."
+  print_info "Group $USERNAME already exists, skipping..."
 else
-    echo "$USERNAME:x:1001:" >> "${PATH_TO_ROOTFS}/etc/group"
-    print_success "Added group to /etc/group"
+  echo "$USERNAME:x:1001:" >>"${PATH_TO_ROOTFS}/etc/group"
+  print_success "Added group to /etc/group"
 fi
 
 # Add to sudo group if not already there
-if grep "^sudo:.*$USERNAME" "${PATH_TO_ROOTFS}/etc/group" > /dev/null 2>&1; then
-    print_info "User already in sudo group, skipping..."
+if grep "^sudo:.*$USERNAME" "${PATH_TO_ROOTFS}/etc/group" >/dev/null 2>&1; then
+  print_info "User already in sudo group, skipping..."
 else
-    sed -i "s/^\(sudo:x:27:.*\)/\1,$USERNAME/" "${PATH_TO_ROOTFS}/etc/group"
-    print_success "Added user to sudo group"
+  sed -i "s/^\(sudo:x:27:.*\)/\1,$USERNAME/" "${PATH_TO_ROOTFS}/etc/group"
+  print_success "Added user to sudo group"
 fi
 
 # Create home directory
 if [ -d "${PATH_TO_ROOTFS}/home/$USERNAME" ]; then
-    print_info "Home directory already exists, skipping..."
+  print_info "Home directory already exists, skipping..."
 else
-    mkdir -p "${PATH_TO_ROOTFS}/home/$USERNAME"
-    cp -r "${PATH_TO_ROOTFS}/etc/skel/." "${PATH_TO_ROOTFS}/home/$USERNAME/" 2>/dev/null || true
-    chown -R 1001:1001 "${PATH_TO_ROOTFS}/home/$USERNAME"
-    chmod 700 "${PATH_TO_ROOTFS}/home/$USERNAME"
-    print_success "Created home directory with proper permissions"
+  mkdir -p "${PATH_TO_ROOTFS}/home/$USERNAME"
+  cp -r "${PATH_TO_ROOTFS}/etc/skel/." "${PATH_TO_ROOTFS}/home/$USERNAME/" 2>/dev/null || true
+  chown -R 1001:1001 "${PATH_TO_ROOTFS}/home/$USERNAME"
+  chmod 700 "${PATH_TO_ROOTFS}/home/$USERNAME"
+  print_success "Created home directory with proper permissions"
 fi
 
 # ========================================
@@ -111,7 +111,7 @@ print_info "Configuring WiFi network: $WIFI_SSID"
 WPA_CONF="${PATH_TO_BOOTFS}/wpa_supplicant.conf"
 
 # Create wpa_supplicant.conf (overwrite if exists)
-cat > "$WPA_CONF" << EOF
+cat >"$WPA_CONF" <<EOF
 country=$WIFI_COUNTRY
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
@@ -119,7 +119,7 @@ update_config=1
 EOF
 
 # Generate and append the network configuration
-wpa_passphrase "$WIFI_SSID" "$WIFI_PASSWORD" >> "$WPA_CONF"
+wpa_passphrase "$WIFI_SSID" "$WIFI_PASSWORD" >>"$WPA_CONF"
 print_success "Created WiFi configuration"
 
 # ========================================
@@ -139,24 +139,24 @@ print_info "Enabling UART..."
 CONFIG_FILE="${PATH_TO_BOOTFS}/config.txt"
 
 if [ -f "$CONFIG_FILE" ]; then
-    # Check if enable_uart is already set
-    if grep -q "^enable_uart=" "$CONFIG_FILE"; then
-        sed -i 's/^enable_uart=.*/enable_uart=1/' "$CONFIG_FILE"
-        print_success "Updated enable_uart in config.txt"
-    else
-        echo "" >> "$CONFIG_FILE"
-        echo "# Enable UART" >> "$CONFIG_FILE"
-        echo "enable_uart=1" >> "$CONFIG_FILE"
-        print_success "Added enable_uart to config.txt"
-    fi
+  # Check if enable_uart is already set
+  if grep -q "^enable_uart=" "$CONFIG_FILE"; then
+    sed -i 's/^enable_uart=.*/enable_uart=1/' "$CONFIG_FILE"
+    print_success "Updated enable_uart in config.txt"
+  else
+    echo "" >>"$CONFIG_FILE"
+    echo "# Enable UART" >>"$CONFIG_FILE"
+    echo "enable_uart=1" >>"$CONFIG_FILE"
+    print_success "Added enable_uart to config.txt"
+  fi
 
-    # Also disable Bluetooth to free up the hardware UART (optional but recommended)
-    if ! grep -q "^dtoverlay=disable-bt" "$CONFIG_FILE"; then
-        echo "dtoverlay=disable-bt" >> "$CONFIG_FILE"
-        print_success "Disabled Bluetooth to free hardware UART"
-    fi
+  # Also disable Bluetooth to free up the hardware UART (optional but recommended)
+  if ! grep -q "^dtoverlay=disable-bt" "$CONFIG_FILE"; then
+    echo "dtoverlay=disable-bt" >>"$CONFIG_FILE"
+    print_success "Disabled Bluetooth to free hardware UART"
+  fi
 else
-    print_error "config.txt not found at $CONFIG_FILE"
+  print_error "config.txt not found at $CONFIG_FILE"
 fi
 
 # ========================================
@@ -167,18 +167,18 @@ print_info "Configuring serial console..."
 CMDLINE_FILE="${PATH_TO_BOOTFS}/cmdline.txt"
 
 if [ -f "$CMDLINE_FILE" ]; then
-    # Backup original cmdline.txt
-    cp "$CMDLINE_FILE" "${CMDLINE_FILE}.backup" 2>/dev/null || true
+  # Backup original cmdline.txt
+  cp "$CMDLINE_FILE" "${CMDLINE_FILE}.backup" 2>/dev/null || true
 
-    # Check if console=serial0 is already present
-    if ! grep -q "console=serial0" "$CMDLINE_FILE"; then
-        sed -i '1s/^/console=serial0,115200 /' "$CMDLINE_FILE"
-        print_success "Added serial console to cmdline.txt"
-    else
-        print_info "Serial console already configured in cmdline.txt"
-    fi
+  # Check if console=serial0 is already present
+  if ! grep -q "console=serial0" "$CMDLINE_FILE"; then
+    sed -i '1s/^/console=serial0,115200 /' "$CMDLINE_FILE"
+    print_success "Added serial console to cmdline.txt"
+  else
+    print_info "Serial console already configured in cmdline.txt"
+  fi
 else
-    print_info "cmdline.txt not found (may not be needed for this OS version)"
+  print_info "cmdline.txt not found (may not be needed for this OS version)"
 fi
 
 # ========================================

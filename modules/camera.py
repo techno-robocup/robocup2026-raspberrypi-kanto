@@ -20,6 +20,118 @@ def set_robot(robot_instance):
 
 logger = modules.logger.get_logger()
 
+# Depth-Anything-V2 model - lazy loaded
+_depth_model = None
+_depth_model_lock = threading.Lock()
+
+
+def get_depth_model():
+  """Get or initialize the Depth-Anything-V2 model (lazy loading with thread safety)."""
+  global _depth_model
+  if _depth_model is None:
+    with _depth_model_lock:
+      if _depth_model is None:  # Double-check locking
+        try:
+          from depth_anything_v2.dpt import DepthAnythingV2
+          import torch
+          import os
+
+          logger.info("Loading Depth-Anything-V2 model...")
+          model_configs = {
+              'vits': {
+                  'encoder': 'vits',
+                  'features': 64,
+                  'out_channels': [48, 96, 192, 384]
+              },
+              'vitb': {
+                  'encoder': 'vitb',
+                  'features': 128,
+                  'out_channels': [96, 192, 384, 768]
+              },
+              'vitl': {
+                  'encoder': 'vitl',
+                  'features': 256,
+                  'out_channels': [256, 512, 1024, 1024]
+              }
+          }
+
+          # Use small model for Raspberry Pi
+          encoder = 'vits'
+          device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+          _depth_model = DepthAnythingV2(**model_configs[encoder])
+
+          # Load pretrained weights
+          # Check environment variable first, then default paths
+          checkpoint_path = os.environ.get('DEPTH_MODEL_PATH',
+                                           'depth_anything_v2_vits.pth')
+
+          if os.path.exists(checkpoint_path):
+            logger.info(f"Loading weights from {checkpoint_path}")
+            _depth_model.load_state_dict(
+                torch.load(checkpoint_path, map_location='cpu'))
+          else:
+            logger.warning(
+                f"Weights file not found at {checkpoint_path}. "
+                "Model initialized with random weights. "
+                "Please download weights from https://github.com/DepthAnything/Depth-Anything-V2/releases "
+                "or set DEPTH_MODEL_PATH environment variable.")
+
+          _depth_model = _depth_model.to(device).eval()
+
+          logger.info(
+              f"Depth-Anything-V2 model loaded successfully on {device}")
+        except Exception as e:
+          logger.error(f"Failed to load Depth-Anything-V2 model: {e}")
+          _depth_model = None
+  return _depth_model
+
+
+def predict_depth(image: np.ndarray) -> Optional[np.ndarray]:
+  """
+  Predict depth map from RGB image using Depth-Anything-V2.
+  
+  Args:
+    image: RGB image (H, W, 3) as numpy array
+    
+  Returns:
+    Depth map (H, W) as numpy array, or None if prediction fails
+  """
+  model = get_depth_model()
+  if model is None:
+    logger.warning("Depth model not available, skipping depth prediction")
+    return None
+
+  try:
+    import torch
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    # Prepare image for model input
+    h, w = image.shape[:2]
+    # Depth-Anything-V2 expects specific input size, resize if needed
+    input_size = (518, 518)  # Common input size for depth models
+    image_resized = cv2.resize(image,
+                               input_size,
+                               interpolation=cv2.INTER_LINEAR)
+
+    # Convert to tensor and normalize
+    image_tensor = torch.from_numpy(image_resized).permute(2, 0,
+                                                           1).float() / 255.0
+    image_tensor = image_tensor.unsqueeze(0).to(device)
+
+    # Predict depth
+    with torch.no_grad():
+      depth = model(image_tensor)
+
+    # Convert back to numpy and resize to original image size
+    depth_map = depth.squeeze().cpu().numpy()
+    depth_map = cv2.resize(depth_map, (w, h), interpolation=cv2.INTER_LINEAR)
+
+    return depth_map
+  except Exception as e:
+    logger.error(f"Depth prediction failed: {e}")
+    return None
+
 
 class Camera:
   """Camera class for handling Picamera2 operations."""
@@ -64,18 +176,78 @@ class Camera:
       self.is_camera_running = False
 
 
-def Rescue_precallback_func(request: CompletedRequest) -> None:
+def Rescue_Depth_precallback_func(request: CompletedRequest) -> None:
+  """
+  Rescue camera pre-callback with depth estimation.
+  This is called during LINETRACE mode to perform depth estimation.
+  """
   global robot
-  modules.logger.get_logger().info("Rescue Camera pre-callback triggered")
+  logger.debug("Rescue Depth Camera pre-callback triggered (linetrace mode)")
   with MappedArray(request, "lores") as mapped_array:
     image = mapped_array.array
     image = cv2.rotate(image, cv2.ROTATE_180)
     current_time = time.time()
     assert isinstance(robot, modules.robot.Robot)
-    if robot.is_rescue_flag:
-      cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
+
+    # Save original image
+    cv2.imwrite(f"bin/{current_time:.3f}_linetrace_rescue_origin.jpg", image)
+
+    # Perform depth estimation
+    depth_map = predict_depth(image)
+
+    if depth_map is not None:
+      # Normalize depth map to 0-255 for visualization
+      depth_normalized = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX,
+                                       cv2.CV_8U)
+
+      # Apply colormap for better visualization
+      depth_colored = cv2.applyColorMap(depth_normalized, cv2.COLORMAP_INFERNO)
+
+      # Save depth map
+      cv2.imwrite(f"bin/{current_time:.3f}_linetrace_depth.jpg", depth_colored)
+      cv2.imwrite(f"bin/{current_time:.3f}_linetrace_depth_raw.jpg",
+                  depth_normalized)
+
+      logger.info(
+          f"Depth prediction completed (linetrace mode), saved to bin/{current_time:.3f}_linetrace_depth.jpg"
+      )
+    else:
+      logger.warning("Depth prediction returned None")
+
+    # Still save the original image to robot (in case needed)
     if robot is not None:
       robot.write_rescue_image(image)
+
+
+def Rescue_precallback_func(request: CompletedRequest) -> None:
+  """
+  Rescue camera pre-callback that switches behavior based on mode.
+  - In linetrace mode: Performs depth estimation
+  - In rescue mode: Simple image capture for YOLO (no depth processing)
+  """
+  global robot
+
+  # Check if robot is initialized
+  if robot is None:
+    return
+
+  assert isinstance(robot, modules.robot.Robot)
+
+  # Depth estimation only during linetrace mode
+  if not robot.is_rescue_flag:
+    # In linetrace mode - perform depth estimation
+    Rescue_Depth_precallback_func(request)
+  else:
+    # In rescue mode - just capture image for YOLO detection
+    modules.logger.get_logger().debug(
+        "Rescue Camera pre-callback triggered (rescue mode)")
+    with MappedArray(request, "lores") as mapped_array:
+      image = mapped_array.array
+      image = cv2.rotate(image, cv2.ROTATE_180)
+      current_time = time.time()
+      cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
+      if robot is not None:
+        robot.write_rescue_image(image)
 
 
 green_marks: List[Tuple[int, int, int, int]] = []

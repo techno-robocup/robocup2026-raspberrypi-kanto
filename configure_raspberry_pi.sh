@@ -9,6 +9,7 @@ PASSWORD="${PASSWORD:-techno}"
 WIFI_SSID="${WIFI_SSID:-rotarymars}"
 WIFI_PASSWORD="${WIFI_PASSWORD:-rotarymars}"
 WIFI_COUNTRY="${WIFI_COUNTRY:-JP}"
+HOSTNAME="${HOSTNAME:-roboberry}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -49,7 +50,9 @@ fi
 print_info "Starting Raspberry Pi configuration..."
 echo "Root FS: $PATH_TO_ROOTFS"
 echo "Boot FS: $PATH_TO_BOOTFS"
+echo "Hostname: $HOSTNAME"
 echo "Username: $USERNAME"
+echo "WiFi SSID: $WIFI_SSID"
 echo ""
 
 # ========================================
@@ -104,7 +107,29 @@ else
 fi
 
 # ========================================
-# 2. Configure WiFi
+# 2. Configure Hostname
+# ========================================
+print_info "Setting hostname to '$HOSTNAME'..."
+
+# Set hostname in /etc/hostname
+echo "$HOSTNAME" > "${PATH_TO_ROOTFS}/etc/hostname"
+print_success "Set hostname in /etc/hostname"
+
+# Update /etc/hosts
+if [ -f "${PATH_TO_ROOTFS}/etc/hosts" ]; then
+    # Replace any existing 127.0.1.1 entry
+    if grep -q "^127.0.1.1" "${PATH_TO_ROOTFS}/etc/hosts"; then
+        sed -i "s/^127.0.1.1.*/127.0.1.1\t$HOSTNAME/" "${PATH_TO_ROOTFS}/etc/hosts"
+        print_success "Updated hostname in /etc/hosts"
+    else
+        # Add 127.0.1.1 entry if it doesn't exist
+        echo -e "127.0.1.1\t$HOSTNAME" >> "${PATH_TO_ROOTFS}/etc/hosts"
+        print_success "Added hostname to /etc/hosts"
+    fi
+fi
+
+# ========================================
+# 3. Configure WiFi
 # ========================================
 print_info "Configuring WiFi network: $WIFI_SSID"
 
@@ -242,7 +267,7 @@ WIFIEOF
 fi
 
 # ========================================
-# 3. Enable SSH
+# 4. Enable SSH
 # ========================================
 print_info "Enabling SSH..."
 
@@ -251,7 +276,7 @@ touch "${PATH_TO_BOOTFS}/ssh"
 print_success "SSH enabled (created /boot/ssh)"
 
 # ========================================
-# 4. Enable UART
+# 5. Enable UART
 # ========================================
 print_info "Enabling UART..."
 
@@ -279,7 +304,7 @@ else
 fi
 
 # ========================================
-# 5. Additional Serial Console Configuration
+# 6. Additional Serial Console Configuration
 # ========================================
 print_info "Configuring serial console..."
 
@@ -307,6 +332,7 @@ echo ""
 print_success "Raspberry Pi configuration complete!"
 echo ""
 echo "Configuration summary:"
+echo "  • Hostname set to '$HOSTNAME' (accessible via $HOSTNAME.local)"
 echo "  • User '$USERNAME' created with sudo access"
 echo "  • WiFi configured for network '$WIFI_SSID' (country: $WIFI_COUNTRY)"
 echo "  • WiFi regulatory domain set to $WIFI_COUNTRY"
@@ -317,6 +343,10 @@ echo "  • WiFi setup service enabled (unblock + region)"
 echo ""
 echo "You can now unmount the SD card and boot your Raspberry Pi."
 echo "Default login: $USERNAME / $PASSWORD"
+echo ""
+echo "Connect via:"
+echo "  • SSH: ssh $USERNAME@$HOSTNAME.local"
+echo "  • UART: screen /dev/ttyUSB0 115200"
 echo ""
 print_info "WiFi Troubleshooting:"
 echo "If WiFi doesn't connect, try these steps on the Pi:"

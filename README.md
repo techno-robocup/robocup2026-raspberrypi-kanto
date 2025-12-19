@@ -28,3 +28,7 @@ Modify
 include-system-site-packages = true
 ```
 
+## How to run
+```
+uv run python main.py
+```

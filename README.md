@@ -3,6 +3,7 @@
 20205/12/19
 ```bash
 sudo usermod -aG video robo
+sudo usermod -aG dialout robo
 ```
 
 Creating pyenv

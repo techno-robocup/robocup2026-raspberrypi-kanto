@@ -385,8 +385,14 @@ def find_best_target() -> None:
         logger.info(
           f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
-    robot.write_rescue_offset(float(best_angle))
-    robot.write_rescue_size(int(best_size))
+    if best_angle is None:
+      robot.write_rescue_offset(None)
+    else:
+      robot.write_rescue_offset(float(best_angle))
+    if best_size is None:
+      robot.write_rescue_size(None)
+    else:
+      robot.write_rescue_size(int(best_size))
 
 
 def catch_ball() -> int:

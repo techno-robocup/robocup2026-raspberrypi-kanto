@@ -29,9 +29,10 @@ MAX_SPEED = 2000
 MIN_SPEED = 1000
 KP = 230
 DP = 160
-P = 0.2
-AP = 1
-WP = 0.3
+BOP = 0.2  # Ball Offset P
+BSP = 1  # Ball Size P
+COP = 0.3  # Cage Offset P
+EOP = 1  # Exit Offset P
 
 last_yolo_time = 0
 
@@ -566,12 +567,12 @@ def calculate_ball() -> tuple[int, int]:
     return 1500, 1500
   diff_angle = 0
   if abs(angle) > 60:
-    diff_angle = angle * P
+    diff_angle = angle * BOP
   else:
     diff_angle = 0
   dist_term = 0
   if consts.BALL_CATCH_SIZE > size:
-    dist_term = (math.sqrt(consts.BALL_CATCH_SIZE) - math.sqrt(size)) * AP
+    dist_term = (math.sqrt(consts.BALL_CATCH_SIZE) - math.sqrt(size)) * BSP
   dist_term = int(max(60, dist_term))
   base_L = 1500 + diff_angle + dist_term
   base_R = 1500 - diff_angle + dist_term
@@ -589,7 +590,7 @@ def calculate_cage() -> tuple[int, int]:
   size = robot.rescue_size
   if angle is None or size is None:
     return 1500, 1500
-  diff_angle = angle * WP
+  diff_angle = angle * COP
   base_L = 1500 + diff_angle + 150
   base_R = 1500 - diff_angle + 150
   logger.info(f"offset: {angle} size:{size}")
@@ -602,12 +603,16 @@ def calculate_exit() -> tuple[int, int]:
   size = robot.rescue_size
   if angle is None or size is None:
     return 1500, 1500
-  diff_angle = angle * P
+  diff_angle = angle * EOP
   if diff_angle > 0:
-    diff_angle -= 30
+    diff_angle = max(diff_angle - 10, 0)
   if diff_angle < 0:
-    diff_angle += 30 # TODO(K10-K10):Fix value
-  return 1500,1500
+    diff_angle += min(diff_angle - 10, 0) # TODO(K10-K10):Fix value
+  base_L = 1500 + diff_angle + 150
+  base_R = 1500 - diff_angle + 150
+  logger.info(f"Motor speed L{base_L} R{base_R}")
+  return clamp(int(base_L), MIN_SPEED, MAX_SPEED), clamp(int(base_R), MIN_SPEED,
+                                                    MAX_SPEED)
 
 def retry_catch() -> bool:
   global catch_failed_cnt
@@ -640,7 +645,6 @@ if __name__ == "__main__":
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
     elif True:
-      # running_yolo()
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
@@ -653,9 +657,9 @@ if __name__ == "__main__":
           robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
       else:
         if robot.rescue_target == consts.TargetList.EXIT.value:
-          motorl = 1500
-          motorr = 1500
+          motorl, motorr = calculate_exit()
           robot.set_speed(motorl, motorr)
+          # TODO: check Entry/Exit
         elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
           motorl, motorr = calculate_ball()
           robot.set_speed(motorl, motorr)

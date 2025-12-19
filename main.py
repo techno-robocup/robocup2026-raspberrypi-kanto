@@ -559,6 +559,17 @@ def change_position() -> bool:
   # logger.info(f"Turn degrees{robot.rescue_turning_angle}")
   return True  # Completed successfully
 
+def set_target() -> bool:
+  if robot.rescue_turning_angle is None:
+    robot.write_rescue_turning_angle(0)
+    return False
+  if robot.rescue_turning_angle > 720:
+    robot.write_rescue_target(consts.TargetList.EXIT.value)
+  elif robot.rescue_turning_angle > 360:
+    robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
+  else:
+    robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
+  return True
 
 def calculate_ball() -> tuple[int, int]:
   angle = robot.rescue_offset
@@ -607,7 +618,7 @@ def calculate_exit() -> tuple[int, int]:
   if diff_angle > 0:
     diff_angle = max(diff_angle - 10, 0)
   if diff_angle < 0:
-    diff_angle += min(diff_angle - 10, 0) # TODO(K10-K10):Fix value
+    diff_angle = min(diff_angle + 10, 0) # TODO(K10-K10):Fix value
   base_L = 1500 + diff_angle + 150
   base_R = 1500 - diff_angle + 150
   logger.info(f"Motor speed L{base_L} R{base_R}")
@@ -649,12 +660,7 @@ if __name__ == "__main__":
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
         robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
-        if robot.rescue_turning_angle > 720:
-          robot.write_rescue_target(consts.TargetList.EXIT.value)
-        elif robot.rescue_turning_angle > 360:
-          robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
-        else:
-          robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
+        set_target()
       else:
         if robot.rescue_target == consts.TargetList.EXIT.value:
           motorl, motorr = calculate_exit()

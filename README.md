@@ -34,3 +34,9 @@ uv run python main.py
 ```
 
 `touch restart.trigger` on home directory
+
+
+```bash
+sudo cp robot.service /etc/systemd/system/robot.service
+sudo cp robot.path /etc/systemd/system/robot.path
+```

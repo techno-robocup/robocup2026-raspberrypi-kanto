@@ -6,4 +6,6 @@ matplotlib
 torch
 torchvision
 pyserial
+Pillow
+huggingface-hub
 depth-anything-v2

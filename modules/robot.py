@@ -169,7 +169,7 @@ class Robot:
     # if self.__last_time_set is None or time.time() - self.__last_time_set > 0.3:
     #   logger.get_logger().info(
     #       f"Stopping due to last time set too long {self.__last_time_set}")
-      # return self.__uart_device.send("MOTOR 1500 1500")
+    # return self.__uart_device.send("MOTOR 1500 1500")
     return self.__uart_device.send(f"MOTOR {self.__MOTOR_L} {self.__MOTOR_R}")
 
   def set_arm(self, angle: int, wire: int):

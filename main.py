@@ -16,7 +16,13 @@ logger.debug("Logger initialized")
 robot = modules.robot.robot
 uart_dev = modules.robot.uart_io()
 uart_devices = uart_dev.list_ports()
-uart_dev.connect(uart_devices[0].device, consts.UART_BAUD_RATE,
+
+# Prioritize USB devices (ESP32 typically appears as /dev/ttyUSB* or /dev/ttyACM*)
+usb_devices = [d for d in uart_devices if 'USB' in d.device or 'ACM' in d.device]
+selected_device = usb_devices[0] if usb_devices else uart_devices[0]
+
+logger.info(f"Connecting to UART device: {selected_device.device}")
+uart_dev.connect(selected_device.device, consts.UART_BAUD_RATE,
                  consts.UART_TIMEOUT)
 robot.set_uart_device(uart_dev)
 

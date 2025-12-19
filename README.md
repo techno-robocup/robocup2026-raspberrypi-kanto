@@ -20,3 +20,10 @@ uv init
 uv add opencv-python ultralytics gradio_imageslider gradio matplotlib torch torchvision pyserial Pillow huggingface-hub depth-anything-v2
 
 ```
+
+
+Modify
+```
+include-system-site-packages = true
+```
+

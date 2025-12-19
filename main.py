@@ -306,12 +306,11 @@ def find_best_target() -> None:
     yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
     last_yolo_time = time.time()
   logger.debug("Find target")
-  # yolo_results = robot.rescue_yolo_result()# TODO: Not working
   current_time = time.time()
   result_image = robot.rescue_image
   if yolo_results and isinstance(yolo_results, list) and len(yolo_results) > 0:
     try:
-      result_image = yolo_results[0].plot()# BUG:Syntax 
+      result_image = yolo_results[0].plot()
     except TypeError as e:
       logger.error(f"Error plotting YOLO result: {e}. Check the type of robot.rescue_yolo_result.")
   cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg", result_image)
@@ -386,8 +385,8 @@ def find_best_target() -> None:
         logger.info(
           f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
-    robot.write_rescue_offset(best_angle)
-    robot.write_rescue_size(best_size)
+    robot.write_rescue_offset(float(best_angle))
+    robot.write_rescue_size(int(best_size))
 
 
 def catch_ball() -> int:
@@ -575,7 +574,7 @@ def calculate_ball() -> tuple[int, int]:
   logger.info(f"offset: {angle} size:{size}")
   logger.info(f"diff_angle: {diff_angle} dist_term {dist_term}")
   logger.info(f"Motor speed L{base_L} R{base_R}")
-  return clamp(base_L, MIN_SPEED, MAX_SPEED), clamp(base_R, MIN_SPEED,
+  return clamp(int(base_L), MIN_SPEED, MAX_SPEED), clamp(int(base_R), MIN_SPEED,
                                                     MAX_SPEED)
 
 
@@ -587,11 +586,9 @@ def calculate_cage() -> tuple[int, int]:
   diff_angle = angle * WP
   base_L = 1500 + diff_angle + 150
   base_R = 1500 - diff_angle + 150
-  base_L = int(base_L)
-  base_R = int(base_R)
   logger.info(f"offset: {angle} size:{size}")
   logger.info(f"Motor speed L{base_L} R{base_R}")
-  return clamp(base_L, MIN_SPEED, MAX_SPEED), clamp(base_R, MIN_SPEED,
+  return clamp(int(base_L), MIN_SPEED, MAX_SPEED), clamp(int(base_R), MIN_SPEED,
                                                     MAX_SPEED)
 
 def calculate_exit() -> tuple[int, int]:
@@ -603,7 +600,7 @@ def calculate_exit() -> tuple[int, int]:
   if diff_angle > 0:
     diff_angle -= 30
   if diff_angle < 0:
-    diff_angle += 30 # TODO:Fix value
+    diff_angle += 30 # TODO(K10-K10):Fix value
   return 1500,1500
 
 def retry_catch() -> bool:
@@ -611,7 +608,7 @@ def retry_catch() -> bool:
   catch_failed_cnt += 1
   prev_time = time.time()
   robot.set_speed(1300,1300)
-  while time.time() - prev_time > 2:
+  while time.time() - prev_time > 2:#TODO(K10-K10): random walk
     robot.send_speed()
     robot.update_button_stat()
     if robot.robot_stop:
@@ -661,7 +658,6 @@ if __name__ == "__main__":
             is_not_took = catch_ball()
             if is_not_took:
               retry_catch()
-            # TODO: Retry
         else:
           motorl, motorr = calculate_cage()
           robot.set_speed(motorl, motorr)

@@ -607,7 +607,7 @@ def calculate_exit() -> tuple[int, int]:
   if diff_angle > 0:
     diff_angle = max(diff_angle - 10, 0)
   if diff_angle < 0:
-    diff_angle += min(diff_angle - 10, 0) # TODO(K10-K10):Fix value
+    diff_angle = min(diff_angle + 10, 0) # TODO(K10-K10):Fix value
   base_L = 1500 + diff_angle + 150
   base_R = 1500 - diff_angle + 150
   logger.info(f"Motor speed L{base_L} R{base_R}")

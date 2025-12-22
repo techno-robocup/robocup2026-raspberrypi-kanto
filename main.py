@@ -578,6 +578,7 @@ if __name__ == "__main__":
                                           robot.rescue_size)
           if robot.rescue_size >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
+        robot.set_speed(motorl, motorr)
     else:
       if not robot.linetrace_stop:
         # Check for green mark intersections before normal line following
@@ -588,5 +589,6 @@ if __name__ == "__main__":
           robot.set_speed(motorl, motorr)
       else:
         logger.debug("Red stop")
+        robot.set_speed(1500, 1500)
     robot.send_speed()
 logger.debug("Program Stop")

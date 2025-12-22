@@ -627,10 +627,10 @@ def Linetrace_Camera_Pre_callback(request):
       x_start = (w - crop_w) // 2
       image = image[:, x_start:x_start + crop_w]
       image = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
-      if not robot.linetrace_slope:
+      if not robot.linetrace_stop:
         cv2.imwrite(f"bin/{current_time:.3f}_linetrace_origin.jpg", image)
       image = reduce_glare_combined(image)
-      if not robot.linetrace_slope:
+      if not robot.linetrace_stop:
         cv2.imwrite(f"bin/{current_time:.3f}_linetrace_format.jpg", image)
       gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
       _, binary_image = cv2.threshold(gray_image, consts.BLACK_WHITE_THRESHOLD,
@@ -640,7 +640,7 @@ def Linetrace_Camera_Pre_callback(request):
                                       cv2.MORPH_CLOSE,
                                       kernel,
                                       iterations=5)
-      if not robot.linetrace_slope:
+      if not robot.linetrace_stop:
         cv2.imwrite(f"bin/{current_time:.3f}_linetrace_binary.jpg",
                     binary_image)
 
@@ -692,7 +692,7 @@ def Linetrace_Camera_Pre_callback(request):
 
       debug_image = visualize_tracking(image, best_contour, cx, cy)
       _draw_debug_contours(debug_image)
-      if not robot.linetrace_slope:
+      if not robot.linetrace_stop:
         cv2.imwrite(f"bin/{current_time:.3f}_tracking.jpg", debug_image)
 
   except SystemExit:

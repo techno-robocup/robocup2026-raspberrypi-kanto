@@ -344,7 +344,6 @@ def detect_red_marks(orig_image: np.ndarray) -> None:
   left, right = margin_x, w - margin_x
   top, bottom = margin_y, h - margin_y
 
-  count = 0
   red_valid_contours = []
   for contour in red_contours:
     if cv2.contourArea(contour) > consts.MIN_RED_AREA:
@@ -355,7 +354,6 @@ def detect_red_marks(orig_image: np.ndarray) -> None:
       center_y = y + ch // 2
       if left <= center_x <= right and top <= center_y <= bottom:
         red_valid_contours.append(contour)
-        count += 1
   if red_valid_contours:
     cv2.drawContours(orig_image, red_valid_contours, -1, (0, 0, 255), 2)
     for contour in red_valid_contours:
@@ -365,7 +363,7 @@ def detect_red_marks(orig_image: np.ndarray) -> None:
       cv2.circle(orig_image, (center_x, center_y), 5, (0, 0, 255), -1)
     if not robot.linetrace_stop:
       cv2.imwrite(f"bin/{time.time():.3f}_red_detected.jpg", orig_image)
-  if count >= 3 and robot is not None:
+  if len(red_valid_contours) >= 3 and robot is not None:
     robot.write_linetrace_stop(True)
 
 

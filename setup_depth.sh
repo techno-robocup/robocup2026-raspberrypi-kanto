@@ -7,7 +7,7 @@ echo "Setting up Depth-Anything-V2 for RoboCup 2026 project..."
 
 # Install Python dependencies
 echo "Installing Python dependencies..."
-pip install -r requirements.txt
+uv sync
 
 # Create checkpoints directory
 echo "Creating checkpoints directory..."
@@ -15,13 +15,13 @@ mkdir -p checkpoints
 
 # Download small model (recommended for Raspberry Pi)
 echo "Downloading Depth-Anything-V2 Small model..."
-if command -v wget &> /dev/null; then
-    wget -P checkpoints https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.pth
-elif command -v curl &> /dev/null; then
-    curl -L -o checkpoints/depth_anything_v2_vits.pth https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.pth
+if command -v wget &>/dev/null; then
+  wget -P checkpoints https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.pth
+elif command -v curl &>/dev/null; then
+  curl -L -o checkpoints/depth_anything_v2_vits.pth https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.pth
 else
-    echo "Error: Neither wget nor curl found. Please install one of them."
-    exit 1
+  echo "Error: Neither wget nor curl found. Please install one of them."
+  exit 1
 fi
 
 # Create bin directory if it doesn't exist

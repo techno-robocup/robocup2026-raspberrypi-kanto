@@ -91,7 +91,7 @@ class uart_io:
     if self.isConnected():
       assert self.__Serial_port != None
       self.__Serial_port.write(str(message).encode("ascii"))
-      logger.get_logger().info(f"Sent message: {str(message)}")
+      logger.get_logger().debug(f"Sent message: {str(message)}")
       logger.get_logger().debug(f"Waiting for reply (timeout: {self.__timeout}s)...")
       while True:
         message_str = self.__Serial_port.read_until(b'\n').decode(
@@ -102,13 +102,13 @@ class uart_io:
             retMessage = Message(message_str)
             logger.get_logger().debug(f"Parsed message: {str(retMessage)}")
             if retMessage.Id == message.Id:
-              logger.get_logger().info(f"✓ Reply received: '{retMessage.Message}'")
+              logger.get_logger().debug(f"✓ Reply received: '{retMessage.Message}'")
               return retMessage.Message
             elif retMessage.Id < message.Id:
-              logger.get_logger().warning(f"Ignoring old message (ID {retMessage.Id}, expected {message.Id})")
+              logger.get_logger().debug(f"Ignoring old message (ID {retMessage.Id}, expected {message.Id})")
               continue
             else:
-              logger.get_logger().error(f"Received unexpected message ID {retMessage.Id} (sent {message.Id})")
+              logger.get_logger().warning(f"Received unexpected message ID {retMessage.Id} (sent {message.Id})")
               return False
           except ValueError as e:
             # Log corrupted message and skip it (likely UART data loss)
@@ -249,7 +249,7 @@ class Robot:
 
   def update_button_stat(self) -> None:
     response = self.__uart_device.send("GET button")
-    logger.get_logger().info(f"Button response: {response} (type: {type(response).__name__})")
+    logger.get_logger().debug(f"Button response: {response} (type: {type(response).__name__})")
     self.__robot_stop = response == "OFF"
     return None
 

@@ -210,7 +210,7 @@ def Rescue_Depth_precallback_func(request: CompletedRequest) -> None:
       cv2.imwrite(f"bin/{current_time:.3f}_linetrace_depth_raw.jpg",
                   depth_normalized)
 
-      logger.info(
+      logger.debug(
           f"Depth prediction completed (linetrace mode), saved to bin/{current_time:.3f}_linetrace_depth.jpg"
       )
     else:

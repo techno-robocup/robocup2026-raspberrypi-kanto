@@ -135,7 +135,7 @@ def execute_green_mark_turn() -> bool:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Turn interrupted by button during approach")
+      logger.debug("Turn interrupted by button during approach")
       return False
     robot.set_speed(BASE_SPEED, BASE_SPEED)
     robot.send_speed()
@@ -157,7 +157,7 @@ def execute_green_mark_turn() -> bool:
       if robot.robot_stop:
         robot.set_speed(1500, 1500)
         robot.send_speed()
-        logger.info("Turn interrupted by button during 180° turn")
+        logger.debug("Turn interrupted by button during 180° turn")
         return False
       robot.set_speed(TURNING_BASE_SPEED,
                       3000 - TURNING_BASE_SPEED)  # Turn left
@@ -187,7 +187,7 @@ def execute_green_mark_turn() -> bool:
       if robot.robot_stop:
         robot.set_speed(1500, 1500)
         robot.send_speed()
-        logger.info("Turn interrupted by button during 90° left turn")
+        logger.debug("Turn interrupted by button during 90° left turn")
         return False
       robot.set_speed(TURNING_BASE_SPEED,
                       3000 - TURNING_BASE_SPEED)  # Turn left
@@ -217,7 +217,7 @@ def execute_green_mark_turn() -> bool:
       if robot.robot_stop:
         robot.set_speed(1500, 1500)
         robot.send_speed()
-        logger.info("Turn interrupted by button during 90° right turn")
+        logger.debug("Turn interrupted by button during 90° right turn")
         return False
       robot.set_speed(3000 - TURNING_BASE_SPEED,
                       TURNING_BASE_SPEED)  # Turn right
@@ -315,13 +315,13 @@ def find_best_target() -> None:
       logger.error(f"Error plotting YOLO result: {e}.")
   cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg", result_image)
   if yolo_results is None or len(yolo_results) == 0:
-    logger.info("Target not found")
+    logger.debug("Target not found")
     robot.write_rescue_offset(None)
     robot.write_rescue_size(None)
     return
   boxes = yolo_results[0].boxes
   if boxes is None or len(boxes) == 0:
-    logger.info("Target not found")
+    logger.debug("Target not found")
     robot.write_rescue_offset(None)
     robot.write_rescue_size(None)
     return
@@ -366,11 +366,11 @@ def find_best_target() -> None:
               includes_center = False
             if is_bottom_third and includes_center:
               robot.write_rescue_ball_flag(True)
-        logger.info(
+        logger.debug(
             f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
       elif consts.TargetList.BLACK_BALL.value == robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
-        logger.info("Override")
+        logger.debug("Override")
         robot.write_rescue_turning_angle(0)
         x_center, y_center, w, h = map(float, box.xywh[0])
         dist = x_center - cx
@@ -383,7 +383,7 @@ def find_best_target() -> None:
           best_target_w = w
           best_target_h = h
         robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
-        logger.info(
+        logger.debug(
             f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
     if best_angle is None:
@@ -412,7 +412,7 @@ def catch_ball() -> int:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Catch interrupted by button")
+      logger.debug("Catch interrupted by button")
       return 1
     robot.send_speed()
   robot.set_speed(1500, 1500)
@@ -426,7 +426,7 @@ def catch_ball() -> int:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Catch interrupted by button")
+      logger.debug("Catch interrupted by button")
       return 1
     robot.send_speed()
   robot.set_arm(1000, 1)
@@ -449,7 +449,7 @@ def catch_ball() -> int:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Catch interrupted by button")
+      logger.debug("Catch interrupted by button")
       return 1
     robot.send_speed()
   robot.set_speed(1500, 1500)
@@ -475,7 +475,7 @@ def release_ball() -> bool:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Release interrupted by button")
+      logger.debug("Release interrupted by button")
       return False
     robot.send_speed()
   robot.set_speed(1500, 1500)
@@ -487,7 +487,7 @@ def release_ball() -> bool:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Release interrupted by button")
+      logger.debug("Release interrupted by button")
       return False
     robot.send_speed()
   robot.set_speed(1500, 1500)
@@ -499,7 +499,7 @@ def release_ball() -> bool:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Release interrupted by button")
+      logger.debug("Release interrupted by button")
       return False
     robot.send_arm()
   robot.set_arm(3072, 0)
@@ -509,7 +509,7 @@ def release_ball() -> bool:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Release interrupted by button")
+      logger.debug("Release interrupted by button")
       return False
     robot.send_arm()
   prev_time = time.time()
@@ -519,7 +519,7 @@ def release_ball() -> bool:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Release interrupted by button")
+      logger.debug("Release interrupted by button")
       return False
     robot.send_speed()
   prev_time = time.time()
@@ -529,7 +529,7 @@ def release_ball() -> bool:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Release interrupted by button")
+      logger.debug("Release interrupted by button")
       return False
     robot.send_speed()
   robot.set_speed(1500, 1500)
@@ -551,10 +551,13 @@ def change_position() -> bool:
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
       robot.send_speed()
-      logger.info("Position change interrupted by button")
+      logger.debug("Position change interrupted by button")
       return False
   robot.set_speed(1500, 1500)
   prev_time = time.time()
+  current_turning_angle = robot.rescue_turning_angle
+  current_turning_angle += 30
+  robot.write_rescue_turning_angle(current_turning_angle)
   while time.time() - prev_time < 0.2:
     robot.send_speed
   find_best_target()

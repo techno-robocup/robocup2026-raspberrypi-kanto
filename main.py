@@ -326,7 +326,7 @@ def find_best_target() -> None:
       result_image = yolo_results[0].plot()
     except TypeError as e:
       logger.error(f"Error plotting YOLO result: {e}.")
-  cv2.imwrite(f"bin/{current_time:.3f}_rescue_result_{type(yolo_results)}.jpg", result_image)
+  cv2.imwrite(f"bin/{current_time:.3f}_rescue_result.jpg", result_image)
   if yolo_results is None or len(yolo_results) == 0:
     logger.info("Target not found")
     robot.write_rescue_offset(None)
@@ -566,7 +566,10 @@ def change_position() -> bool:
       logger.info("Position change interrupted by button")
       return False
   robot.set_speed(1500, 1500)
-  robot.send_speed()
+  prev_time = time.time()
+  while time.time() - prev_time < 0.1:
+    robot.send_speed
+  find_best_target()
   # robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
   # logger.info(f"Turn degrees{robot.rescue_turning_angle}")
   return True  # Completed successfully

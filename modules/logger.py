@@ -50,12 +50,9 @@ def get_logger(name="Logger", file="log.log"):
     console_handler.setFormatter(colored_formatter)
     logger.addHandler(console_handler)
 
-    # File handler WITHOUT colors (plain text for log files)
-    plain_formatter = UnixTimeFormatter(
-      '[%(asctime)s] [%(levelname)-8s] [%(filename)s:%(lineno)d] [%(funcName)s] %(message)s'
-    )
+    # File handler WITH colors (so tail -f shows colored output)
     file_handler = logging.FileHandler(file, mode='a', encoding='utf-8')
-    file_handler.setFormatter(plain_formatter)
+    file_handler.setFormatter(colored_formatter)  # Now uses colored formatter!
     logger.addHandler(file_handler)
 
   return logger

@@ -24,6 +24,10 @@ logger = modules.logger.get_logger()
 _depth_model = None
 _depth_model_lock = threading.Lock()
 
+# Flag to track if depth evaluation is currently running
+_depth_evaluation_running = False
+_depth_evaluation_lock = threading.Lock()
+
 
 def get_depth_model():
   """Get or initialize the Depth-Anything-V2 model (lazy loading with thread safety)."""
@@ -182,43 +186,56 @@ def Rescue_Depth_precallback_func(request: CompletedRequest) -> None:
   Rescue camera pre-callback with depth estimation.
   This is called during LINETRACE mode to perform depth estimation.
   """
-  global robot
-  logger.debug("Rescue Depth Camera pre-callback triggered (linetrace mode)")
-  with MappedArray(request, "lores") as mapped_array:
-    image = mapped_array.array
-    image = cv2.rotate(image, cv2.ROTATE_180)
-    current_time = time.time()
-    assert isinstance(robot, modules.robot.Robot)
+  global robot, _depth_evaluation_running
+  
+  # Check if depth evaluation is already running
+  with _depth_evaluation_lock:
+    if _depth_evaluation_running:
+      logger.debug("Skipping depth evaluation - one is already in progress")
+      return
+    _depth_evaluation_running = True
+  
+  try:
+    logger.debug("Rescue Depth Camera pre-callback triggered (linetrace mode)")
+    with MappedArray(request, "lores") as mapped_array:
+      image = mapped_array.array
+      image = cv2.rotate(image, cv2.ROTATE_180)
+      current_time = time.time()
+      assert isinstance(robot, modules.robot.Robot)
 
-    # Save original image (input for depth estimation)
-    cv2.imwrite(f"bin/{current_time:.3f}_depth_input.jpg", image)
+      # Save original image (input for depth estimation)
+      cv2.imwrite(f"bin/{current_time:.3f}_depth_input.jpg", image)
 
-    # Perform depth estimation
-    depth_map = predict_depth(image)
+      # Perform depth estimation
+      depth_map = predict_depth(image)
 
-    if depth_map is not None:
-      # Colorize depth map
-      depth_colored = colorize_depth(depth_map)
+      if depth_map is not None:
+        # Colorize depth map
+        depth_colored = colorize_depth(depth_map)
 
-      # Save depth maps
-      cv2.imwrite(f"bin/{current_time:.3f}_linetrace_depth.jpg", depth_colored)
+        # Save depth maps
+        cv2.imwrite(f"bin/{current_time:.3f}_linetrace_depth.jpg", depth_colored)
 
-      # Also save raw normalized depth
-      depth_normalized = (depth_map - depth_map.min()) / (
-          depth_map.max() - depth_map.min() + 1e-8)
-      depth_normalized = (depth_normalized * 255).astype(np.uint8)
-      cv2.imwrite(f"bin/{current_time:.3f}_linetrace_depth_raw.jpg",
-                  depth_normalized)
+        # Also save raw normalized depth
+        depth_normalized = (depth_map - depth_map.min()) / (
+            depth_map.max() - depth_map.min() + 1e-8)
+        depth_normalized = (depth_normalized * 255).astype(np.uint8)
+        cv2.imwrite(f"bin/{current_time:.3f}_linetrace_depth_raw.jpg",
+                    depth_normalized)
 
-      logger.debug(
-          f"Depth saved: {current_time:.3f}_depth_input.jpg, _linetrace_depth.jpg, _linetrace_depth_raw.jpg"
-      )
-    else:
-      logger.warning("Depth prediction returned None")
+        logger.debug(
+            f"Depth saved: {current_time:.3f}_depth_input.jpg, _linetrace_depth.jpg, _linetrace_depth_raw.jpg"
+        )
+      else:
+        logger.warning("Depth prediction returned None")
 
-    # Still save the original image to robot (in case needed)
-    if robot is not None:
-      robot.write_rescue_image(image)
+      # Still save the original image to robot (in case needed)
+      if robot is not None:
+        robot.write_rescue_image(image)
+  finally:
+    # Always reset the flag, even if an exception occurs
+    with _depth_evaluation_lock:
+      _depth_evaluation_running = False
 
 
 

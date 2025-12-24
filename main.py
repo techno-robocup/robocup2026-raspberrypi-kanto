@@ -555,7 +555,7 @@ def change_position() -> bool:
       return False
   robot.set_speed(1500, 1500)
   prev_time = time.time()
-  while time.time() - prev_time < 0.1:
+  while time.time() - prev_time < 0.2:
     robot.send_speed
   find_best_target()
   # robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)

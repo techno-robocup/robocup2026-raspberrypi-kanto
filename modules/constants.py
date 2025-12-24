@@ -73,8 +73,8 @@ MIN_BLACK_LINE_AREA = 300
 MIN_GREEN_AREA = 200
 MIN_RED_AREA = 400
 
-TURN_180_TIME = 4.2
-TURN_30_TIME = 0.7
+TURN_180_TIME = 3
+TURN_30_TIME = 0.5
 
 # Green mark intersection turning times (seconds)
 GREEN_MARK_APPROACH_TIME = 0.2

@@ -287,18 +287,6 @@ def signal_handler(sig, frame):
   sys.exit(0)
 
 
-# def running_yolo() -> bool:
-#   global last_yolo_time
-#   logger.debug("yolo")
-#   if time.time() - last_yolo_time > 0.1:
-#     yolo_result = consts.MODEL(robot.rescue_image, verbose=False)
-#     assert isinstance(robot, modules.robot.Robot)
-#     robot.write_rescue_yolo_result(yolo_result)
-#     last_yolo_time = time.time()
-#     return True
-#   return True
-
-
 def find_best_target() -> None:
   yolo_results = None
   if time.time() - robot.last_yolo_time > 0.1:
@@ -536,10 +524,7 @@ def release_ball() -> bool:
     robot.send_speed()
   robot.set_speed(1500, 1500)
   robot.send_speed()
-  if robot.rescue_target == consts.TargetList.GREEN_CAGE.value:
-    robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
-  else:
-    robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
+  set_target()
   return True
 
 

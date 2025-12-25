@@ -165,7 +165,7 @@ class Robot:
     self.__green_marks: List[tuple[int, int, int, int]] = []
     self.__green_black_detected: List[np.ndarray] = []
     self.__last_time_set: float | None = None
-    self.__last_slope_get_time: float = 0
+    self.__last_slope_get_time: Optional[float] = None
     # Set robot reference in camera module to avoid circular import
     modules.camera.set_robot(self)
 
@@ -337,12 +337,12 @@ class Robot:
     with self.__green_marks_lock:
       return self.__green_black_detected.copy()
 
-  def write_last_slope_get_time(self, time:float) -> None:
+  def write_last_slope_get_time(self, time: Optional[float]) -> None:
     with self.__linetrace_lock:
       self.__last_slope_get_time = time
 
   @property
-  def last_slope_get_time(self) -> float:
+  def last_slope_get_time(self) -> Optional[float]:
     return self.__last_slope_get_time
 
 

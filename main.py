@@ -255,7 +255,7 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
   if slope is None: # When the were no args
     slope = robot.linetrace_slope
   if slope is None: # When the robot could not find an appropriate slope
-    if time.time() - robot.last_slope_get_time > consts.RESCUE_FLAG_TIME:
+    if robot.last_slope_get_time is not None and time.time() - robot.last_slope_get_time > consts.RESCUE_FLAG_TIME:
       robot.write_is_rescue_flag(True)
       return 1500, 1500
     return BASE_SPEED, BASE_SPEED
@@ -673,6 +673,7 @@ if __name__ == "__main__":
       logger.debug("robot stop true, stopping..")
       robot.write_linetrace_stop(False)
       robot.write_is_rescue_flag(False)
+      robot.write_last_slope_get_time(None)
     elif robot.is_rescue_flag:
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):

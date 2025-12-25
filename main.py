@@ -255,7 +255,7 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
 
   if slope is None:
     if time.time() - robot.last_slope_get_time > consts.RESCUE_FLAG_TIME:
-      robot.is_rescue_flag(True)
+      robot.write_is_rescue_flag(True)
       return 1500, 1500
     return BASE_SPEED, BASE_SPEED
   else:
@@ -292,7 +292,6 @@ def find_best_target() -> None:
   if time.time() - robot.last_yolo_time > 0.1:
     yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
     robot.write_last_yolo_time(time.time())
-  logger.debug("Find target")
   current_time = time.time()
   result_image = robot.rescue_image
   if yolo_results and isinstance(yolo_results, list) and len(yolo_results) > 0:
@@ -371,7 +370,7 @@ def find_best_target() -> None:
           best_target_h = h
         robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
         logger.debug(
-            f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
+            f"Override Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
     if best_angle is None:
       robot.write_rescue_offset(None)
@@ -672,6 +671,7 @@ if __name__ == "__main__":
         robot.write_rescue_target(consts.TargetList.EXIT)
       logger.debug("robot stop true, stopping..")
       robot.write_linetrace_stop(False)
+      robot.write_is_rescue_flag(False)
     elif robot.is_rescue_flag:
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):

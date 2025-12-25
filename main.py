@@ -566,8 +566,8 @@ def set_target() -> bool:
     robot.write_rescue_turning_angle(0)
     return False
   if robot.rescue_turning_angle > 720:
-    # robot.write_rescue_target(consts.TargetList.EXIT.value)
-    robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
+    robot.write_rescue_target(consts.TargetList.EXIT.value)
+    # robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
   elif robot.rescue_turning_angle > 360:
     robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
   else:

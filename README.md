@@ -73,3 +73,5 @@ This will automatically trigger a service restart via the path monitoring mechan
 - **robot.service**: Main robot process (runs continuously)
 - **robot.path**: Monitors `/home/robo/restart.trigger` for changes
 - **robot-restart.service**: Oneshot service that restarts robot.service when triggered
+
+rm `/etc/ssh/sshd_config.d/rename_user.conf`

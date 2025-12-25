@@ -340,7 +340,7 @@ def find_best_target() -> None:
         dist = x_center - cx
         area = w * h
         if abs(dist) < min_dist:
-          robot.write_rescue_ball_flag(False)
+          robot.write_rescue_ball_flag(0)
           min_dist = abs(dist)
           best_angle = dist
           best_size = area
@@ -350,14 +350,18 @@ def find_best_target() -> None:
           if cls == consts.TargetList.BLACK_BALL.value or cls == consts.TargetList.SILVER_BALL.value:
             is_bottom_third = best_target_y and best_target_y > (image_height *
                                                                  2 / 3)
+            is_bottom_sixth = is_bottom_third and best_target_y > (image_height *
+                                                                   5/6)
             if best_angle is not None:
               ball_left = best_angle - best_target_w / 2 + image_width / 2
               ball_right = best_angle + best_target_w / 2 + image_width / 2
               includes_center = ball_left <= image_width / 2 <= ball_right
             else:
               includes_center = False
+            if is_bottom_sixth:
+              robot.write_rescue_ball_flag(2)
             if is_bottom_third and includes_center:
-              robot.write_rescue_ball_flag(True)
+              robot.write_rescue_ball_flag(1)
         logger.debug(
             f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
@@ -651,6 +655,20 @@ def calculate_exit() -> tuple[int, int]:
 #       return False
 #   return True
 
+def too_close_back() -> bool:
+  prev_time = time.time()
+  robot.set_speed(1300, 1300)
+  while time.time() - prev_time > 1:
+    robot.send_speed()
+    robot.update_button_stat()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+      robot.send_speed()
+      logger.info("Turn interrupted by button during approach")
+      return False
+  robot.set_speed(1500, 1500)
+  robot.send_speed()
+  return 0
 
 logger.debug("Objects Initialized")
 
@@ -680,6 +698,7 @@ if __name__ == "__main__":
       robot.write_linetrace_stop(False)
       robot.write_is_rescue_flag(False)
       robot.write_last_slope_get_time(time.time())
+      robot.write_rescue_ball_flag(0)
     elif robot.is_rescue_flag:
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
@@ -698,10 +717,12 @@ if __name__ == "__main__":
           motorl, motorr = calculate_ball()
           robot.set_speed(motorl, motorr)
           robot.send_speed()
-          if robot.rescue_ball_flag:
-            is_not_took = catch_ball()
-            if is_not_took:
-              retry_catch()
+          if robot.rescue_ball_flag == 1:
+            catch_ball()
+            # if is_not_took:
+            #   retry_catch()
+          elif robot.rescue_ball_flag == 2:
+            too_close_back()
         else:
           motorl, motorr = calculate_cage()
           robot.set_speed(motorl, motorr)

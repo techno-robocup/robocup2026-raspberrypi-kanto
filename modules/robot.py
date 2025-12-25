@@ -155,7 +155,7 @@ class Robot:
     self.__rescue_size: Optional[int] = None
     self.__rescue_target: int = consts.TargetList.SILVER_BALL.value
     self.__rescue_turning_angle: int = 0  # Total revolutions
-    self.__rescue_ball_flag = False  # catch ball flag
+    self.__rescue_ball_status: int = 0  # ball position
     self.__slope = None
     self.__is_stop = False
     self.__robot_stop: bool = False
@@ -253,7 +253,7 @@ class Robot:
     with self.__rescue_lock:
       self.__rescue_turning_angle = angle
 
-  def write_rescue_ball_flag(self, flag: bool) -> None:
+  def write_rescue_ball_flag(self, flag: int) -> None:
     with self.__rescue_lock:
       self.__rescue_ball_flag = flag
 
@@ -284,7 +284,7 @@ class Robot:
       return self.__rescue_turning_angle
 
   @property
-  def rescue_ball_flag(self) -> bool:
+  def rescue_ball_flag(self) -> int:
     with self.__rescue_lock:
       return self.__rescue_ball_flag
 

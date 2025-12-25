@@ -63,7 +63,7 @@ Linetrace_Camera_lores = (Linetrace_Camera_Size[0] // 8,
                           Linetrace_Camera_Size[1] // 8)
 Linetrace_Camera_precallback = Linetrace_Camera_precallback_func
 
-BLACK_WHITE_THRESHOLD = 110
+BLACK_WHITE_THRESHOLD = 115
 BALL_CATCH_SIZE = 280000
 LINETRACE_CAMERA_LORES_HEIGHT = 180
 LINETRACE_CAMERA_LORES_WIDTH = 320
@@ -91,7 +91,7 @@ TURN_CHECK_DELAY = 0.5  # Delay before checking for line crossings
 # Checkpoint position for turn detection (ratio of image dimensions)
 # Point at top-center of the image
 TURN_CHECKPOINT_X_RATIO = 0.5  # Center horizontally
-TURN_CHECKPOINT_Y_RATIO = 0.1  # Near top (10% from top)
+TURN_CHECKPOINT_Y_RATIO = 0.3  # Lowered to 30% from top
 TURN_CHECKPOINT_SIZE = 10  # Size of area to check (pixels)
 
 RESCUE_FLAG_TIME = 3.0

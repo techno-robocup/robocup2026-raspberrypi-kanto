@@ -416,7 +416,17 @@ def catch_ball() -> int:
       logger.debug("Catch interrupted by button")
       return 1
     robot.send_speed()
-  robot.set_arm(1000, 1)
+  prev_time = time.time()
+  robot.set_speed(1400,1400)
+  while time.time() - prev_time < 1:
+    robot.update_button_stat()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+      robot.send_speed()
+      logger.debug("Catch interrupted by button")
+      return 1
+    robot.send_speed()
+  robot.set_arm(1024, 1)
   prev_time = time.time()
   while time.time() - prev_time < 0.5:
     robot.update_button_stat()
@@ -441,19 +451,20 @@ def catch_ball() -> int:
     robot.send_speed()
   robot.set_speed(1500, 1500)
   robot.send_speed()
-  prev_time = time.time()
-  while time.time() - prev_time < 0.2:
-    robot.send_speed()
-  find_best_target()
-  if robot.rescue_offset is None:
-    logger.info("Catch successful")
-    robot.write_rescue_target(
-        consts.TargetList.GREEN_CAGE.value if robot.rescue_target == consts.
-        TargetList.SILVER_BALL.value else consts.TargetList.RED_CAGE.value)
-    return 0
-  else:
-    logger.info("Catch failed")
-    return 1
+  return 0
+  # prev_time = time.time()
+  # while time.time() - prev_time < 0.2:
+  #   robot.send_speed()
+  # find_best_target()
+  # if robot.rescue_offset is None:
+  #   logger.info("Catch successful")
+  #   robot.write_rescue_target(
+  #       consts.TargetList.GREEN_CAGE.value if robot.rescue_target == consts.
+  #       TargetList.SILVER_BALL.value else consts.TargetList.RED_CAGE.value)
+  #   return 0
+  # else:
+  #   logger.info("Catch failed")
+  #   return 1
 
 
 def release_ball() -> bool:

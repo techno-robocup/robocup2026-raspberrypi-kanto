@@ -255,7 +255,7 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
 
   if slope is None:
     if time.time() - robot.last_slope_get_time > consts.RESCUE_FLAG_TIME:
-      robot.is_rescue_flag = True
+      robot.is_rescue_flag(True)
       return 1500, 1500
     return BASE_SPEED, BASE_SPEED
   else:
@@ -685,7 +685,7 @@ if __name__ == "__main__":
           if robot.linetrace_slope is not None:
             robot.set_speed(1500, 1500)
             robot.send_speed()
-            robot.is_rescue_flag = False
+            robot.write_is_rescue_flag(False)
         elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
           motorl, motorr = calculate_ball()
           robot.set_speed(motorl, motorr)

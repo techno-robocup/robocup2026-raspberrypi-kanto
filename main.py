@@ -44,6 +44,8 @@ EOP = 1  # Exit Offset P
 
 catch_failed_cnt = 0
 
+def is_valid_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 def clamp(value: int, min_val: int = 1000, max_val: int = 2000) -> int:
   """Clamp value between min and max."""
@@ -261,6 +263,7 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
   else:
     robot.write_last_slope_get_time(time.time())
 
+  assert is_valid_number(slope), str(slope)
   angle = math.atan(slope)
   if angle < 0:
     angle += math.pi

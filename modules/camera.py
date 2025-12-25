@@ -288,6 +288,11 @@ def detect_green_marks(orig_image: np.ndarray,
   green_marks.clear()
   green_black_detected.clear()
 
+  # Create a copy for debug visualization (don't modify original image)
+  debug_image = None
+  if green_contours:
+    debug_image = orig_image.copy()
+
   # Process each contour
   for contour in green_contours:
     if cv2.contourArea(contour) > consts.MIN_GREEN_AREA:
@@ -308,11 +313,15 @@ def detect_green_marks(orig_image: np.ndarray,
                                                         h)
       green_black_detected.append(black_detections)
 
-      _draw_green_mark_debug(orig_image, x, y, w, h, center_x, center_y,
-                             black_detections)
-  if green_marks:
+      # Draw on the debug copy, not the original
+      if debug_image is not None:
+        _draw_green_mark_debug(debug_image, x, y, w, h, center_x, center_y,
+                               black_detections)
+  
+  # Save debug image if there were green marks
+  if green_marks and debug_image is not None:
     if not robot.linetrace_stop:
-      cv2.imwrite(f"bin/{time.time():.3f}_green_marks_with_x.jpg", orig_image)
+      cv2.imwrite(f"bin/{time.time():.3f}_green_marks_with_x.jpg", debug_image)
 
   # Write to robot instance
   if robot is not None:

@@ -404,39 +404,55 @@ def _check_black_lines_around_mark(blackline_image: np.ndarray, center_x: int,
   roi_height = int(h * 0.5)
   black_threshold_ratio = 0.75  # 75% of pixels must be black
 
+  logger.info(f"Checking black lines around green mark at center ({center_x}, {center_y}), size ({w}x{h})")
+
   # Check bottom
-  roi_b = blackline_image[
-      center_y + h // 2:min(center_y + h // 2 +
-                            roi_height, consts.LINETRACE_CAMERA_LORES_HEIGHT),
-      center_x - roi_width // 2:center_x + roi_width // 2]
+  roi_b_y1 = center_y + h // 2
+  roi_b_y2 = min(center_y + h // 2 + roi_height, consts.LINETRACE_CAMERA_LORES_HEIGHT)
+  roi_b_x1 = center_x - roi_width // 2
+  roi_b_x2 = center_x + roi_width // 2
+  logger.info(f"  Bottom ROI: x[{roi_b_x1}:{roi_b_x2}], y[{roi_b_y1}:{roi_b_y2}]")
+  roi_b = blackline_image[roi_b_y1:roi_b_y2, roi_b_x1:roi_b_x2]
   black_count, total = _count_black_pixels(roi_b, consts.BLACK_WHITE_THRESHOLD)
   if total > 0 and black_count / total <= black_threshold_ratio:
     black_detections[0] = 1
+    logger.info(f"    -> Black line detected (ratio: {black_count/total:.2f})")
 
   # Check top
-  roi_t = blackline_image[max(center_y - h // 2 -
-                              roi_height, 0):center_y - h // 2,
-                          center_x - roi_width // 2:center_x + roi_width // 2]
+  roi_t_y1 = max(center_y - h // 2 - roi_height, 0)
+  roi_t_y2 = center_y - h // 2
+  roi_t_x1 = center_x - roi_width // 2
+  roi_t_x2 = center_x + roi_width // 2
+  logger.info(f"  Top ROI: x[{roi_t_x1}:{roi_t_x2}], y[{roi_t_y1}:{roi_t_y2}]")
+  roi_t = blackline_image[roi_t_y1:roi_t_y2, roi_t_x1:roi_t_x2]
   black_count, total = _count_black_pixels(roi_t, consts.BLACK_WHITE_THRESHOLD)
   if total > 0 and black_count / total <= black_threshold_ratio:
     black_detections[1] = 1
+    logger.info(f"    -> Black line detected (ratio: {black_count/total:.2f})")
 
   # Check left
-  roi_l = blackline_image[center_y - roi_height // 2:center_y + roi_height // 2,
-                          max(center_x - w // 2 - roi_width, 0):center_x -
-                          w // 2]
+  roi_l_y1 = center_y - roi_height // 2
+  roi_l_y2 = center_y + roi_height // 2
+  roi_l_x1 = max(center_x - w // 2 - roi_width, 0)
+  roi_l_x2 = center_x - w // 2
+  logger.info(f"  Left ROI: x[{roi_l_x1}:{roi_l_x2}], y[{roi_l_y1}:{roi_l_y2}]")
+  roi_l = blackline_image[roi_l_y1:roi_l_y2, roi_l_x1:roi_l_x2]
   black_count, total = _count_black_pixels(roi_l, consts.BLACK_WHITE_THRESHOLD)
   if total > 0 and black_count / total <= black_threshold_ratio:
     black_detections[2] = 1
+    logger.info(f"    -> Black line detected (ratio: {black_count/total:.2f})")
 
   # Check right
-  roi_r = blackline_image[center_y - roi_height // 2:center_y + roi_height // 2,
-                          center_x + w //
-                          2:min(center_x + w // 2 +
-                                roi_width, consts.LINETRACE_CAMERA_LORES_WIDTH)]
+  roi_r_y1 = center_y - roi_height // 2
+  roi_r_y2 = center_y + roi_height // 2
+  roi_r_x1 = center_x + w // 2
+  roi_r_x2 = min(center_x + w // 2 + roi_width, consts.LINETRACE_CAMERA_LORES_WIDTH)
+  logger.info(f"  Right ROI: x[{roi_r_x1}:{roi_r_x2}], y[{roi_r_y1}:{roi_r_y2}]")
+  roi_r = blackline_image[roi_r_y1:roi_r_y2, roi_r_x1:roi_r_x2]
   black_count, total = _count_black_pixels(roi_r, consts.BLACK_WHITE_THRESHOLD)
   if total > 0 and black_count / total <= black_threshold_ratio:
     black_detections[3] = 1
+    logger.info(f"    -> Black line detected (ratio: {black_count/total:.2f})")
 
   return black_detections
 

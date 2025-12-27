@@ -70,12 +70,6 @@ LINETRACE_CAMERA_LORES_WIDTH = 320
 LINETRACE_CROP_WIDTH_RATIO = 0.65
 
 MIN_BLACK_LINE_AREA = 300
-
-# Line recovery constants - for backing up when losing the line
-LINE_RECOVERY_AREA_THRESHOLD = 800  # Trigger recovery when line area drops below this
-LINE_RECOVERY_ANGLE_THRESHOLD = 0.25  # Trigger when angle error exceeds this (radians, ~28.6°)
-LINE_RECOVERY_BACKUP_TIME = 1.0  # Seconds to back up
-LINE_RECOVERY_BACKUP_SPEED = 1200  # Motor speed for backing up (< 1500 = reverse)
 MIN_GREEN_AREA = 200
 MIN_RED_AREA = 400
 
@@ -83,24 +77,24 @@ TURN_180_TIME = 3
 TURN_30_TIME = 0.5
 
 # Green mark intersection turning times (seconds)
-GREEN_MARK_APPROACH_TIME = 0.5
+GREEN_MARK_APPROACH_TIME = 0.2
 TURN_90_LEFT_TIME = 1.5
 TURN_90_RIGHT_TIME = 1.5
 GREEN_MARK_TURN_180_TIME = 3.5
-GREEN_MARK_Y_THRESHOLD_RATIO = 4 / 5  # Mark must be in bottom fith
+GREEN_MARK_Y_THRESHOLD_RATIO = 2 / 3  # Mark must be in bottom third
 
 # Maximum timeout for line-based turns (safety fallback)
-MAX_TURN_90_TIME = 5.0
-MAX_TURN_180_TIME = 10.0
-TURN_CHECK_DELAY = 1  # Delay before checking for line crossings
+MAX_TURN_90_TIME = 3.0
+MAX_TURN_180_TIME = 7.0
+TURN_CHECK_DELAY = 0.5  # Delay before checking for line crossings
 
 # Checkpoint position for turn detection (ratio of image dimensions)
 # Point at top-center of the image
 TURN_CHECKPOINT_X_RATIO = 0.5  # Center horizontally
-TURN_CHECKPOINT_Y_RATIO = 0.3  # Lowered to 30% from top
+TURN_CHECKPOINT_Y_RATIO = 0.1  # Near top (10% from top)
 TURN_CHECKPOINT_SIZE = 10  # Size of area to check (pixels)
 
-RESCUE_FLAG_TIME = 5.0
+RESCUE_FLAG_TIME = 3.0
 
 lower_green = np.array([20, 130, 90])
 upper_green = np.array([100, 255, 255])

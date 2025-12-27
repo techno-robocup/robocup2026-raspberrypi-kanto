@@ -513,6 +513,7 @@ def find_best_target() -> None:
   if time.time() - robot.last_yolo_time > 0.1:
     yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
     robot.write_last_yolo_time(time.time())
+  logger.debug("Find target")
   current_time = time.time()
   result_image = robot.rescue_image
   if yolo_results and isinstance(yolo_results, list) and len(yolo_results) > 0:
@@ -633,6 +634,7 @@ def catch_ball() -> int:
       return 1
     robot.send_speed()
   robot.set_arm(1400, 0)
+  robot.send_speed()
   robot.send_arm()
   robot.set_speed(1650, 1650)
   prev_time = time.time()
@@ -777,6 +779,7 @@ def release_ball() -> bool:
     robot.send_speed()
   robot.set_speed(1500, 1500)
   robot.send_speed()
+  set_target()
   return True
 
 

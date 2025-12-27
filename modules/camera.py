@@ -133,6 +133,7 @@ def predict_depth(image: np.ndarray) -> Optional[np.ndarray]:
     # Use the model's infer_image method which handles all preprocessing
     with torch.no_grad():
       depth = model.infer_image(image)
+
     return depth
   except Exception as e:
     logger.exception(f"Depth prediction failed: {e}")
@@ -246,11 +247,6 @@ def Rescue_precallback_func(request: CompletedRequest) -> None:
       image = cv2.rotate(image, cv2.ROTATE_180)
       current_time = time.time()
       cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
-      image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-      depth = predict_depth(image_rgb)
-      if depth is not None:
-        depth_u8 = _normalize_depth_array(depth)
-        cv2.imwrite(f"bin/{current_time:.3f}_rescue_depth.jpg", depth_u8)
       if robot is not None:
         robot.write_rescue_image(image)
 
@@ -292,11 +288,6 @@ def detect_green_marks(orig_image: np.ndarray,
   green_marks.clear()
   green_black_detected.clear()
 
-  # Create a copy for debug visualization (don't modify original image)
-  debug_image = None
-  if green_contours:
-    debug_image = orig_image.copy()
-
   # Process each contour
   for contour in green_contours:
     if cv2.contourArea(contour) > consts.MIN_GREEN_AREA:
@@ -317,23 +308,11 @@ def detect_green_marks(orig_image: np.ndarray,
                                                         h)
       green_black_detected.append(black_detections)
 
-      # Draw on the debug copy, not the original
-      if debug_image is not None:
-        _draw_green_mark_debug(debug_image, x, y, w, h, center_x, center_y,
-                               black_detections)
-  
-  # Save debug image if there were green marks
-  if green_marks and debug_image is not None:
-    # Add checkpoint visualization to green mark debug images
-    h, w = blackline_image.shape[:2]
-    checkpoint_x = int(w * consts.TURN_CHECKPOINT_X_RATIO)
-    checkpoint_y = int(h * consts.TURN_CHECKPOINT_Y_RATIO)
-    checkpoint_size = consts.TURN_CHECKPOINT_SIZE
-    is_black = robot.top_checkpoint_black if robot is not None else False
-    _draw_checkpoint_debug(debug_image, checkpoint_x, checkpoint_y,
-                           checkpoint_size, is_black)
+      _draw_green_mark_debug(orig_image, x, y, w, h, center_x, center_y,
+                             black_detections)
+  if green_marks:
     if not robot.linetrace_stop:
-      cv2.imwrite(f"bin/{time.time():.3f}_green_marks_with_x.jpg", debug_image)
+      cv2.imwrite(f"bin/{time.time():.3f}_green_marks_with_x.jpg", orig_image)
 
   # Write to robot instance
   if robot is not None:
@@ -381,8 +360,8 @@ def detect_red_marks(orig_image: np.ndarray) -> None:
       center_x = x + cw // 2
       center_y = y + ch // 2
       cv2.circle(orig_image, (center_x, center_y), 5, (0, 0, 255), -1)
-    # if not robot.linetrace_stop:
-    #   cv2.imwrite(f"bin/{time.time():.3f}_red_detected.jpg", orig_image)
+    if not robot.linetrace_stop:
+      cv2.imwrite(f"bin/{time.time():.3f}_red_detected.jpg", orig_image)
   # if len(red_valid_contours) >= 3 and robot is not None:
   #   robot.write_linetrace_stop(True)
 
@@ -416,55 +395,39 @@ def _check_black_lines_around_mark(blackline_image: np.ndarray, center_x: int,
   roi_height = int(h * 0.5)
   black_threshold_ratio = 0.75  # 75% of pixels must be black
 
-  logger.info(f"Checking black lines around green mark at center ({center_x}, {center_y}), size ({w}x{h})")
-
   # Check bottom
-  roi_b_y1 = center_y + h // 2
-  roi_b_y2 = min(center_y + h // 2 + roi_height, consts.LINETRACE_CAMERA_LORES_HEIGHT)
-  roi_b_x1 = center_x - roi_width // 2
-  roi_b_x2 = center_x + roi_width // 2
-  logger.info(f"  Bottom ROI: x[{roi_b_x1}:{roi_b_x2}], y[{roi_b_y1}:{roi_b_y2}]")
-  roi_b = blackline_image[roi_b_y1:roi_b_y2, roi_b_x1:roi_b_x2]
+  roi_b = blackline_image[
+      center_y + h // 2:min(center_y + h // 2 +
+                            roi_height, consts.LINETRACE_CAMERA_LORES_HEIGHT),
+      center_x - roi_width // 2:center_x + roi_width // 2]
   black_count, total = _count_black_pixels(roi_b, consts.BLACK_WHITE_THRESHOLD)
   if total > 0 and black_count / total <= black_threshold_ratio:
     black_detections[0] = 1
-    logger.info(f"    -> Black line detected (ratio: {black_count/total:.2f})")
 
   # Check top
-  roi_t_y1 = max(center_y - h // 2 - roi_height, 0)
-  roi_t_y2 = center_y - h // 2
-  roi_t_x1 = center_x - roi_width // 2
-  roi_t_x2 = center_x + roi_width // 2
-  logger.info(f"  Top ROI: x[{roi_t_x1}:{roi_t_x2}], y[{roi_t_y1}:{roi_t_y2}]")
-  roi_t = blackline_image[roi_t_y1:roi_t_y2, roi_t_x1:roi_t_x2]
+  roi_t = blackline_image[max(center_y - h // 2 -
+                              roi_height, 0):center_y - h // 2,
+                          center_x - roi_width // 2:center_x + roi_width // 2]
   black_count, total = _count_black_pixels(roi_t, consts.BLACK_WHITE_THRESHOLD)
   if total > 0 and black_count / total <= black_threshold_ratio:
     black_detections[1] = 1
-    logger.info(f"    -> Black line detected (ratio: {black_count/total:.2f})")
 
   # Check left
-  roi_l_y1 = center_y - roi_height // 2
-  roi_l_y2 = center_y + roi_height // 2
-  roi_l_x1 = max(center_x - w // 2 - roi_width, 0)
-  roi_l_x2 = center_x - w // 2
-  logger.info(f"  Left ROI: x[{roi_l_x1}:{roi_l_x2}], y[{roi_l_y1}:{roi_l_y2}]")
-  roi_l = blackline_image[roi_l_y1:roi_l_y2, roi_l_x1:roi_l_x2]
+  roi_l = blackline_image[center_y - roi_height // 2:center_y + roi_height // 2,
+                          max(center_x - w // 2 - roi_width, 0):center_x -
+                          w // 2]
   black_count, total = _count_black_pixels(roi_l, consts.BLACK_WHITE_THRESHOLD)
   if total > 0 and black_count / total <= black_threshold_ratio:
     black_detections[2] = 1
-    logger.info(f"    -> Black line detected (ratio: {black_count/total:.2f})")
 
   # Check right
-  roi_r_y1 = center_y - roi_height // 2
-  roi_r_y2 = center_y + roi_height // 2
-  roi_r_x1 = center_x + w // 2
-  roi_r_x2 = min(center_x + w // 2 + roi_width, consts.LINETRACE_CAMERA_LORES_WIDTH)
-  logger.info(f"  Right ROI: x[{roi_r_x1}:{roi_r_x2}], y[{roi_r_y1}:{roi_r_y2}]")
-  roi_r = blackline_image[roi_r_y1:roi_r_y2, roi_r_x1:roi_r_x2]
+  roi_r = blackline_image[center_y - roi_height // 2:center_y + roi_height // 2,
+                          center_x + w //
+                          2:min(center_x + w // 2 +
+                                roi_width, consts.LINETRACE_CAMERA_LORES_WIDTH)]
   black_count, total = _count_black_pixels(roi_r, consts.BLACK_WHITE_THRESHOLD)
   if total > 0 and black_count / total <= black_threshold_ratio:
     black_detections[3] = 1
-    logger.info(f"    -> Black line detected (ratio: {black_count/total:.2f})")
 
   return black_detections
 
@@ -491,27 +454,6 @@ def _draw_green_mark_debug(image: np.ndarray, x: int, y: int, w: int, h: int,
   if black_detections[3]:
     cv2.line(image, (center_x + 10, center_y - 10),
              (center_x + 10, center_y + 10), (255, 0, 0), 2)
-
-
-def _draw_checkpoint_debug(image: np.ndarray, checkpoint_x: int,
-                           checkpoint_y: int, checkpoint_size: int,
-                           is_black: bool) -> None:
-  """Draw checkpoint region on debug image."""
-  y1 = max(0, checkpoint_y - checkpoint_size // 2)
-  y2 = checkpoint_y + checkpoint_size // 2
-  x1 = max(0, checkpoint_x - checkpoint_size // 2)
-  x2 = checkpoint_x + checkpoint_size // 2
-  # Yellow rectangle for checkpoint
-  cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 255), 2)
-  # Draw center crosshair
-  cv2.line(image, (checkpoint_x - 5, checkpoint_y),
-           (checkpoint_x + 5, checkpoint_y), (0, 255, 255), 1)
-  cv2.line(image, (checkpoint_x, checkpoint_y - 5),
-           (checkpoint_x, checkpoint_y + 5), (0, 255, 255), 1)
-  # Add text label with status
-  status = "BLACK" if is_black else "CLEAR"
-  cv2.putText(image, f"CP:{status}", (x1 - 10, y1 - 5),
-              cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
 
 
 def find_best_contour(contours: List[np.ndarray], camera_x: int, camera_y: int,
@@ -765,6 +707,9 @@ def Linetrace_Camera_Pre_callback(request):
                                       cv2.MORPH_CLOSE,
                                       kernel,
                                       iterations=5)
+      if not robot.linetrace_stop:
+        cv2.imwrite(f"bin/{current_time:.3f}_linetrace_binary.jpg",
+                    binary_image)
 
       # Check top checkpoint for turn detection
       checkpoint_x = int(w * consts.TURN_CHECKPOINT_X_RATIO)
@@ -781,24 +726,6 @@ def Linetrace_Camera_Pre_callback(request):
       is_black = _check_region_is_black(checkpoint_region, 127.0)
       if robot is not None:
         robot.write_top_checkpoint_black(is_black)
-
-      # Draw checkpoint visualization on binary image for debugging
-      if not robot.linetrace_stop:
-        # Convert binary to color for visualization
-        binary_debug = cv2.cvtColor(binary_image, cv2.COLOR_GRAY2BGR)
-        # Draw checkpoint rectangle (Red if black detected, Green if not)
-        color = (0, 0, 255) if is_black else (0, 255, 0)
-        cv2.rectangle(binary_debug, (x1, y1), (x2, y2), color, 2)
-        # Draw center crosshair
-        cv2.line(binary_debug, (checkpoint_x - 5, checkpoint_y),
-                 (checkpoint_x + 5, checkpoint_y), color, 1)
-        cv2.line(binary_debug, (checkpoint_x, checkpoint_y - 5),
-                 (checkpoint_x, checkpoint_y + 5), color, 1)
-        # Add text label
-        cv2.putText(binary_debug, f"CP:{is_black}", (x1, y1 - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
-        cv2.imwrite(f"bin/{current_time:.3f}_linetrace_binary.jpg",
-                    binary_debug)
 
       detect_red_marks(image)
       detect_green_marks(image, binary_image)
@@ -826,7 +753,6 @@ def Linetrace_Camera_Pre_callback(request):
       with LASTBLACKLINE_LOCK:
         lastblackline = cx
       if robot is not None:
-        robot.write_line_area(line_area)
         robot.write_linetrace_slope(calculate_slope(best_contour, cx, cy, w, h))
 
       debug_image = visualize_tracking(image, best_contour, cx, cy)

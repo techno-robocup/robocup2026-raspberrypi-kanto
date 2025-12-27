@@ -1,6 +1,7 @@
 import modules.constants as consts
 import modules.logger
 import modules.robot
+import threading
 import time
 import signal
 import sys
@@ -43,6 +44,7 @@ COP = 0.3  # Cage Offset P
 EOP = 1  # Exit Offset P
 
 catch_failed_cnt = 0
+yolo_mutex = threading.Lock()
 
 def is_valid_number(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
@@ -394,10 +396,14 @@ def signal_handler(sig, frame):
 
 def find_best_target() -> None:
   yolo_results = None
-  if time.time() - robot.last_yolo_time > 0.1:
-    yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
-    robot.write_last_yolo_time(time.time())
   current_time = time.time()
+  with yolo_mutex:
+    image = robot.rescue_image.copy()
+  cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
+  with yolo_mutex:
+    if time.time() - robot.last_yolo_time > 0.1:
+      yolo_results = consts.MODEL(image, verbose=False)
+      robot.write_last_yolo_time(time.time())
   result_image = robot.rescue_image
   if yolo_results and isinstance(yolo_results, list) and len(yolo_results) > 0:
     try:
@@ -816,8 +822,6 @@ if __name__ == "__main__":
               robot.write_rescue_target(consts.TargetList.GREEN_CAGE.value)
             if robot.rescue_target == consts.TargetList.BLACK_BALL.value:
               robot.write_rescue_target(consts.TargetList.RED_CAGE.value)
-            # if is_not_took:
-              # retry_catch()
         else:
           motorl, motorr = calculate_cage()
           robot.set_speed(motorl, motorr)

@@ -242,6 +242,83 @@ def execute_green_mark_turn() -> bool:
   return True  # Completed successfully
 
 
+def should_execute_line_recovery(line_area: Optional[float], angle_error: float) -> bool:
+  """
+  Check if line recovery should be executed.
+  
+  Recovery triggers when BOTH conditions are met:
+  1. Line area is below threshold (robot losing sight of line)
+  2. Angle error is steep (robot is at a significant angle to the line)
+  
+  Args:
+    line_area: Current detected line area in pixels
+    angle_error: Current angle error from vertical (radians)
+  
+  Returns:
+    True if recovery should be executed
+  """
+  if line_area is None or not is_valid_number(line_area):
+    return False
+  
+  area_condition = line_area < consts.LINE_RECOVERY_AREA_THRESHOLD
+  angle_condition = abs(angle_error) > consts.LINE_RECOVERY_ANGLE_THRESHOLD
+  
+  return area_condition and angle_condition
+
+
+def execute_line_recovery() -> bool:
+  """
+  Execute line recovery by backing up to regain line visibility.
+  
+  When the robot is losing the line at a steep angle, this function
+  backs up for a short duration to allow the robot to re-acquire the line.
+  
+  Returns:
+    True if recovery completed successfully
+    False if interrupted by button
+  """
+  logger.info("Executing line recovery - backing up")
+  
+  start_time = time.time()
+  while time.time() - start_time < consts.LINE_RECOVERY_BACKUP_TIME:
+    robot.update_button_stat()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+      robot.send_speed()
+      logger.debug("Line recovery interrupted by button")
+      return False
+    
+    # Back up with both motors at the same speed
+    robot.set_speed(consts.LINE_RECOVERY_BACKUP_SPEED, 
+                    consts.LINE_RECOVERY_BACKUP_SPEED)
+    robot.send_speed()
+  
+  # Stop after backup
+  robot.set_speed(1500, 1500)
+  robot.send_speed()
+  
+  logger.info(f"Line recovery completed in {time.time() - start_time:.2f}s")
+  return True
+
+
+def get_current_angle_error() -> Optional[float]:
+  """
+  Calculate the current angle error from robot's line slope.
+  
+  Returns:
+    Angle error in radians, or None if slope is unavailable
+  """
+  slope = robot.linetrace_slope
+  if slope is None or not is_valid_number(slope):
+    return None
+  
+  angle = math.atan(slope)
+  if angle < 0:
+    angle += math.pi
+  
+  return angle - (math.pi / 2)
+
+
 def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
   """
   Calculate left and right motor speeds based on line slope and area.
@@ -746,8 +823,15 @@ if __name__ == "__main__":
         if should_process_green_mark():
           execute_green_mark_turn()
         else:
-          motorl, motorr = calculate_motor_speeds()
-          robot.set_speed(motorl, motorr)
+          # Check if line recovery is needed (small line area + steep angle)
+          angle_error = get_current_angle_error()
+          line_area = robot.line_area
+          
+          if angle_error is not None and should_execute_line_recovery(line_area, angle_error):
+            execute_line_recovery()
+          else:
+            motorl, motorr = calculate_motor_speeds()
+            robot.set_speed(motorl, motorr)
       else:
         logger.debug("Red stop")
         robot.set_speed(1500, 1500)

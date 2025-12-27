@@ -70,6 +70,12 @@ LINETRACE_CAMERA_LORES_WIDTH = 320
 LINETRACE_CROP_WIDTH_RATIO = 0.65
 
 MIN_BLACK_LINE_AREA = 300
+
+# Line recovery constants - for backing up when losing the line
+LINE_RECOVERY_AREA_THRESHOLD = 800  # Trigger recovery when line area drops below this
+LINE_RECOVERY_ANGLE_THRESHOLD = 0.5  # Trigger when angle error exceeds this (radians, ~28.6°)
+LINE_RECOVERY_BACKUP_TIME = 1.0  # Seconds to back up
+LINE_RECOVERY_BACKUP_SPEED = 1400  # Motor speed for backing up (< 1500 = reverse)
 MIN_GREEN_AREA = 200
 MIN_RED_AREA = 400
 

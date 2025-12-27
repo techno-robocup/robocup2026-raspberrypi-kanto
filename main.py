@@ -808,8 +808,8 @@ if __name__ == "__main__":
           robot.send_speed()
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
-            if is_not_took:
-              retry_catch()
+            # if is_not_took:
+              # retry_catch()
         else:
           motorl, motorr = calculate_cage()
           robot.set_speed(motorl, motorr)

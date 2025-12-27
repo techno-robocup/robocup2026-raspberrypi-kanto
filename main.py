@@ -780,12 +780,7 @@ if __name__ == "__main__":
       robot.set_speed(1500, 1500)
       robot.set_arm(3072, 0)
       robot.send_arm()
-      if robot.rescue_target == (consts.TargetList.SILVER_BALL or consts.TargetList.GREEN_CAGE):
-        robot.write_rescue_target(consts.TargetList.SILVER_BALL)
-      elif robot.rescue_target == (consts.TargetList.BLACK_BALL or consts.TargetList.RED_CAGE):
-        robot.write_rescue_target(consts.TargetList.BLACK_BALL)
-      else:
-        robot.write_rescue_target(consts.TargetList.EXIT)
+      robot.write_rescue_turning_angle(0)
       logger.debug("robot stop true, stopping..")
       robot.write_linetrace_stop(False)
       robot.write_is_rescue_flag(False)

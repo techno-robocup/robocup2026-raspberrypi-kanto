@@ -391,6 +391,18 @@ def signal_handler(sig, frame):
   robot.send_speed()
   sys.exit(0)
 
+def sleep_sec(sec: float) -> int:
+  """Sleep for the specified number of seconds, checking for robot stop."""
+  prev_time = time.time()
+  while time.time() - prev_time < sec:
+    robot.update_button_stat()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+      robot.send_speed()
+      logger.debug("Sleep interrupted by button")
+      return 1
+    robot.send_speed()
+  return 0
 
 def find_best_target() -> None:
   yolo_results = None
@@ -495,74 +507,28 @@ def catch_ball() -> int:
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_speed(1400 , 1400)
-  prev_time = time.time()
-  while time.time() - prev_time < 0.8:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.info("Catch interrupted by button")
-      return 1
-    robot.send_speed()
+  sleep_sec(0.8)
+  robot.set_speed(1500, 1500)
+  robot.send_speed()
   robot.set_arm(1400, 0)
   robot.send_arm()
   robot.set_speed(1650, 1650)
-  prev_time = time.time()
-  while time.time() - prev_time < 2:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Catch interrupted by button")
-      return 1
-    robot.send_speed()
+  sleep_sec(2)
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_arm(1000, 0)
   robot.send_arm()
   robot.set_speed(1600, 1600)
-  prev_time = time.time()
-  while time.time() - prev_time < 2:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Catch interrupted by button")
-      return 1
-    robot.send_speed()
-  prev_time = time.time()
+  sleep_sec(2)
   robot.set_speed(1400,1400)
-  while time.time() - prev_time < 1:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Catch interrupted by button")
-      return 1
-    robot.send_speed()
+  sleep_sec(1)
   robot.set_arm(1000, 1)
-  prev_time = time.time()
-  while time.time() - prev_time < 0.5:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.info("Catch interrupted by button")
-      return 1
-    robot.send_arm()
+  sleep_sec(0.5)
   robot.send_arm()
   robot.set_arm(3072, 1)
   robot.send_arm()
   robot.set_speed(1450, 1450)
-  prev_time = time.time()
-  while time.time() - prev_time < 1:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Catch interrupted by button")
-      return 1
-    robot.send_speed()
+  sleep_sec(1)
   robot.set_speed(1500, 1500)
   robot.send_speed()
   return 0
@@ -581,72 +547,24 @@ def catch_ball() -> int:
   #   return 1
 
 
-def release_ball() -> bool:
+def release_ball() -> int:
   logger.debug("Executing release_ball()")
-  prev_time = time.time()
   robot.set_speed(1700, 1700)
-  while time.time() - prev_time < 2.2:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Release interrupted by button")
-      return False
-    robot.send_speed()
+  sleep_sec(2.2)
   robot.set_speed(1500, 1500)
   robot.send_speed()
-  prev_time = time.time()
   robot.set_speed(1400, 1400)
-  while time.time() - prev_time < 0.5:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Release interrupted by button")
-      return False
-    robot.send_speed()
+  sleep_sec(0.5)
   robot.set_speed(1500, 1500)
   robot.set_arm(1536, 0)
   robot.send_speed()
-  prev_time = time.time()
-  while time.time() - prev_time < 1.5:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Release interrupted by button")
-      return False
-    robot.send_arm()
+  sleep_sec(1.5)
   robot.set_arm(3072, 0)
-  prev_time = time.time()
-  while time.time() - prev_time < 0.5:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Release interrupted by button")
-      return False
-    robot.send_arm()
-  prev_time = time.time()
+  sleep_sec(0.5)
   robot.set_speed(1400, 1400)
-  while time.time() - prev_time < 1:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Release interrupted by button")
-      return False
-    robot.send_speed()
-  prev_time = time.time()
+  sleep_sec(1)
   robot.set_speed(1750, 1250)
-  while time.time() - prev_time < consts.TURN_180_TIME:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Release interrupted by button")
-      return False
-    robot.send_speed()
+  sleep_sec(consts.TURN_180_TIME)
   robot.set_speed(1500, 1500)
   robot.send_speed()
   set_target()
@@ -656,19 +574,10 @@ def release_ball() -> bool:
 def change_position() -> bool:
   logger.debug("Change position")
   prev_time = time.time()
-  while time.time() - prev_time < consts.TURN_30_TIME:
-    robot.set_speed(1750, 1250)
-    robot.send_speed()
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Position change interrupted by button")
-      return False
+  robot.set_speed(1750, 1250)
+  sleep_sec(consts.TURN_30_TIME)
   robot.set_speed(1500, 1500)
-  prev_time = time.time()
-  while time.time() - prev_time < 0.2:
-    robot.send_speed()
+  sleep_sec(0.2)
   find_best_target()
   # robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
   # logger.info(f"Turn degrees{robot.rescue_turning_angle}")

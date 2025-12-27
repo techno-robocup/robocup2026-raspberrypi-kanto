@@ -823,6 +823,7 @@ if __name__ == "__main__":
           robot.set_speed(motorl, motorr)
           robot.send_speed()
           if is_bottom_sixth:
+            back()
 
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()

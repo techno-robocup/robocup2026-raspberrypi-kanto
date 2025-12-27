@@ -1,7 +1,6 @@
 import modules.constants as consts
 import modules.logger
 import modules.robot
-import threading
 import time
 import signal
 import sys
@@ -39,12 +38,11 @@ MIN_SPEED = 1000
 KP = 230
 DP = 160
 BOP = 0.05  # Ball Offset P
-BSP = 2  # Ball Size P
+BSP = 3  # Ball Size P
 COP = 0.3  # Cage Offset P
 EOP = 1  # Exit Offset P
 
 catch_failed_cnt = 0
-yolo_mutex = threading.Lock()
 
 def is_valid_number(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
@@ -393,19 +391,13 @@ def signal_handler(sig, frame):
   robot.send_speed()
   sys.exit(0)
 
-is_bottom_sixth = False
 
 def find_best_target() -> None:
-  global is_bottom_sixth
   yolo_results = None
+  if time.time() - robot.last_yolo_time > 0.1:
+    yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
+    robot.write_last_yolo_time(time.time())
   current_time = time.time()
-  with yolo_mutex:
-    image = robot.rescue_image.copy()
-  cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
-  with yolo_mutex:
-    if time.time() - robot.last_yolo_time > 0.1:
-      yolo_results = consts.MODEL(image, verbose=False)
-      robot.write_last_yolo_time(time.time())
   result_image = robot.rescue_image
   if yolo_results and isinstance(yolo_results, list) and len(yolo_results) > 0:
     try:
@@ -457,8 +449,6 @@ def find_best_target() -> None:
           if cls == consts.TargetList.BLACK_BALL.value or cls == consts.TargetList.SILVER_BALL.value:
             is_bottom_third = best_target_y and best_target_y > (image_height *
                                                                  2 / 3)
-            is_bottom_sixth = best_target_y and best_target_y > (image_height *
-                                                                  5/6)
             if best_angle is not None:
               ball_left = best_angle - best_target_w / 2 + image_width / 2
               ball_right = best_angle + best_target_w / 2 + image_width / 2
@@ -504,6 +494,16 @@ def catch_ball() -> int:
       f"Caught ball type: {consts.TargetList(robot.rescue_target).name}")
   robot.set_speed(1500, 1500)
   robot.send_speed()
+  robot.set_speed(1400 , 1400)
+  prev_time = time.time()
+  while time.time() - prev_time < 0.8:
+    robot.update_button_stat()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+      robot.send_speed()
+      logger.info("Catch interrupted by button")
+      return 1
+    robot.send_speed()
   robot.set_arm(1400, 0)
   robot.send_arm()
   robot.set_speed(1650, 1650)
@@ -649,6 +649,7 @@ def release_ball() -> bool:
     robot.send_speed()
   robot.set_speed(1500, 1500)
   robot.send_speed()
+  set_target()
   return True
 
 
@@ -674,7 +675,7 @@ def change_position() -> bool:
   return True  # Completed successfully
 
 
-def set_target_turning_angle() -> bool:
+def set_target() -> bool:
   if robot.rescue_turning_angle is None:
     robot.write_rescue_turning_angle(0)
     return False
@@ -687,13 +688,6 @@ def set_target_turning_angle() -> bool:
     robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
   return True
 
-def normalize_rescue_turning_angle() -> int:
-  if robot.rescue_turning_angle >= 720:
-    return 720
-  elif robot.rescue_turning_angle >= 360:
-    return 360
-  else:
-    return 0
 
 def calculate_ball() -> tuple[int, int]:
   angle = robot.rescue_offset
@@ -750,18 +744,6 @@ def calculate_exit() -> tuple[int, int]:
   return clamp(int(base_L), MIN_SPEED,
                MAX_SPEED), clamp(int(base_R), MIN_SPEED, MAX_SPEED)
 
-def back() -> None:
-  prev_time = time.time()
-  robot.set_speed(1400, 1400)
-  while time.time - prev_time < 0.8:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.debug("Release interrupted by button")
-    robot.send_speed()
-  robot.set_speed(1400, 1400)
-  robot.send_speed()
 
 # def retry_catch() -> bool:
 #   global catch_failed_cnt
@@ -797,8 +779,12 @@ if __name__ == "__main__":
       robot.set_speed(1500, 1500)
       robot.set_arm(3072, 0)
       robot.send_arm()
-      robot.write_rescue_turning_angle(0)
-      robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
+      if robot.rescue_target == (consts.TargetList.SILVER_BALL or consts.TargetList.GREEN_CAGE):
+        robot.write_rescue_target(consts.TargetList.SILVER_BALL)
+      elif robot.rescue_target == (consts.TargetList.BLACK_BALL or consts.TargetList.RED_CAGE):
+        robot.write_rescue_target(consts.TargetList.BLACK_BALL)
+      else:
+        robot.write_rescue_target(consts.TargetList.EXIT)
       logger.debug("robot stop true, stopping..")
       robot.write_linetrace_stop(False)
       robot.write_is_rescue_flag(False)
@@ -808,9 +794,8 @@ if __name__ == "__main__":
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
         robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
-        set_target_turning_angle()
+        set_target()
       else:
-        robot.write_rescue_turning_angle(normalize_rescue_turning_angle())
         if robot.rescue_target == consts.TargetList.EXIT.value:
           motorl, motorr = calculate_exit()
           robot.set_speed(motorl, motorr)
@@ -822,22 +807,16 @@ if __name__ == "__main__":
           motorl, motorr = calculate_ball()
           robot.set_speed(motorl, motorr)
           robot.send_speed()
-          if is_bottom_sixth:
-            back()
-
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
-            if robot.rescue_target == consts.TargetList.SILVER_BALL.value:
-              robot.write_rescue_target(consts.TargetList.GREEN_CAGE.value)
-            if robot.rescue_target == consts.TargetList.BLACK_BALL.value:
-              robot.write_rescue_target(consts.TargetList.RED_CAGE.value)
+            # if is_not_took:
+              # retry_catch()
         else:
           motorl, motorr = calculate_cage()
           robot.set_speed(motorl, motorr)
           robot.send_speed()
           if robot.rescue_size >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
-            set_target_turning_angle()
         robot.set_speed(motorl, motorr)
     else:
       if not robot.linetrace_stop:

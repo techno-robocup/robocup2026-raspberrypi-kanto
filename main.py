@@ -124,7 +124,7 @@ def execute_green_mark_turn() -> bool:
     if detection[1] == 0:
       continue
 
-    if detection[2] == 1:  # Left black line
+    if detection[2] == 1:  # Left blackfith
       has_left = True
     if detection[3] == 1:  # Right black line
       has_right = True

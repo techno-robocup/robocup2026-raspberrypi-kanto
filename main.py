@@ -649,7 +649,6 @@ def release_ball() -> bool:
     robot.send_speed()
   robot.set_speed(1500, 1500)
   robot.send_speed()
-  set_target()
   return True
 
 
@@ -675,7 +674,7 @@ def change_position() -> bool:
   return True  # Completed successfully
 
 
-def set_target() -> bool:
+def set_target_turning_angle() -> bool:
   if robot.rescue_turning_angle is None:
     robot.write_rescue_turning_angle(0)
     return False
@@ -688,6 +687,13 @@ def set_target() -> bool:
     robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
   return True
 
+def normalize_rescue_turning_angle() -> int:
+  if robot.rescue_turning_angle >= 720:
+    return 720
+  elif robot.rescue_turning_angle >= 360:
+    return 360
+  else:
+    return 0
 
 def calculate_ball() -> tuple[int, int]:
   angle = robot.rescue_offset
@@ -794,8 +800,9 @@ if __name__ == "__main__":
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
         robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
-        set_target()
+        set_target_turning_angle()
       else:
+        robot.write_rescue_turning_angle(normalize_rescue_turning_angle())
         if robot.rescue_target == consts.TargetList.EXIT.value:
           motorl, motorr = calculate_exit()
           robot.set_speed(motorl, motorr)
@@ -809,6 +816,10 @@ if __name__ == "__main__":
           robot.send_speed()
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
+            if robot.rescue_target == consts.TargetList.SILVER_BALL.value:
+              robot.write_rescue_target(consts.TargetList.GREEN_CAGE)
+            if robot.rescue_target == consts.TargetList.BLACK_BALL.value:
+              robot.write_rescue_target(consts.TargetList.RED_CAGE)
             # if is_not_took:
               # retry_catch()
         else:
@@ -817,6 +828,7 @@ if __name__ == "__main__":
           robot.send_speed()
           if robot.rescue_size >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
+            set_target_turning_angle()
         robot.set_speed(motorl, motorr)
     else:
       if not robot.linetrace_stop:

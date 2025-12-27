@@ -157,6 +157,7 @@ class Robot:
     self.__rescue_turning_angle: int = 0  # Total revolutions
     self.__rescue_ball_flag = False  # catch ball flag
     self.__slope = None
+    self.__line_area: Optional[float] = None
     self.__is_stop = False
     self.__robot_stop: bool = False
     self.__top_checkpoint_black: bool = False
@@ -165,7 +166,7 @@ class Robot:
     self.__green_marks: List[tuple[int, int, int, int]] = []
     self.__green_black_detected: List[np.ndarray] = []
     self.__last_time_set: float | None = None
-    self.__last_slope_get_time: float = 0
+    self.__last_slope_get_time: float = None
     # Set robot reference in camera module to avoid circular import
     modules.camera.set_robot(self)
 
@@ -301,6 +302,15 @@ class Robot:
     with self.__linetrace_lock:
       return self.__slope
 
+  def write_line_area(self, area: Optional[float]) -> None:
+    with self.__linetrace_lock:
+      self.__line_area = area
+
+  @property
+  def line_area(self) -> Optional[float]:
+    with self.__linetrace_lock:
+      return self.__line_area
+
   @property
   def linetrace_stop(self) -> bool:
     with self.__linetrace_lock:
@@ -337,7 +347,7 @@ class Robot:
     with self.__green_marks_lock:
       return self.__green_black_detected.copy()
 
-  def write_last_slope_get_time(self, time:float) -> None:
+  def write_last_slope_get_time(self, time: float) -> None:
     with self.__linetrace_lock:
       self.__last_slope_get_time = time
 

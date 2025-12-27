@@ -44,8 +44,10 @@ EOP = 1  # Exit Offset P
 
 catch_failed_cnt = 0
 
+def is_valid_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
-def clamp(value: int, min_val: int = 1000, max_val: int = 2000) -> int:
+def clamp(value: int, min_val: int = MIN_SPEED, max_val: int = MAX_SPEED) -> int:
   """Clamp value between min and max."""
   return max(min_val, min(max_val, value))
 
@@ -232,15 +234,99 @@ def execute_green_mark_turn() -> bool:
   # Stop after turn
   robot.set_speed(1500, 1500)
   robot.send_speed()
+  robot.set_speed(1350, 1350)
+  robot.send_speed()
+  time.sleep(0.8)
+  robot.set_speed(1500, 1500)
+  robot.send_speed()
   return True  # Completed successfully
+
+
+def should_execute_line_recovery(line_area: Optional[float], angle_error: float) -> bool:
+  """
+  Check if line recovery should be executed.
+  
+  Recovery triggers when BOTH conditions are met:
+  1. Line area is below threshold (robot losing sight of line)
+  2. Angle error is steep (robot is at a significant angle to the line)
+  
+  Args:
+    line_area: Current detected line area in pixels
+    angle_error: Current angle error from vertical (radians)
+  
+  Returns:
+    True if recovery should be executed
+  """
+  if line_area is None or not is_valid_number(line_area):
+    return False
+  
+  area_condition = line_area < consts.LINE_RECOVERY_AREA_THRESHOLD
+  angle_condition = abs(angle_error) > consts.LINE_RECOVERY_ANGLE_THRESHOLD
+  
+  return area_condition and angle_condition
+
+
+def execute_line_recovery() -> bool:
+  """
+  Execute line recovery by backing up to regain line visibility.
+  
+  When the robot is losing the line at a steep angle, this function
+  backs up for a short duration to allow the robot to re-acquire the line.
+  
+  Returns:
+    True if recovery completed successfully
+    False if interrupted by button
+  """
+  logger.info("Executing line recovery - backing up")
+  
+  start_time = time.time()
+  while time.time() - start_time < consts.LINE_RECOVERY_BACKUP_TIME:
+    robot.update_button_stat()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+      robot.send_speed()
+      logger.debug("Line recovery interrupted by button")
+      return False
+    
+    # Back up with both motors at the same speed
+    robot.set_speed(consts.LINE_RECOVERY_BACKUP_SPEED, 
+                    consts.LINE_RECOVERY_BACKUP_SPEED)
+    robot.send_speed()
+  
+  # Stop after backup
+  robot.set_speed(1500, 1500)
+  robot.send_speed()
+  
+  logger.info(f"Line recovery completed in {time.time() - start_time:.2f}s")
+  robot.write_last_slope_get_time(time.time())
+  return True
+
+
+def get_current_angle_error() -> Optional[float]:
+  """
+  Calculate the current angle error from robot's line slope.
+  
+  Returns:
+    Angle error in radians, or None if slope is unavailable
+  """
+  slope = robot.linetrace_slope
+  if slope is None or not is_valid_number(slope):
+    return None
+  
+  angle = math.atan(slope)
+  if angle < 0:
+    angle += math.pi
+  
+  return angle - (math.pi / 2)
 
 
 def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
   """
-  Calculate left and right motor speeds based on line slope.
+  Calculate left and right motor speeds based on line slope and area.
 
   Uses arctan to convert slope to angle, then calculates the difference
   from π/2 (vertical). This gives a normalized angular error for steering.
+  Also reduces speed when the black line gets smaller for better control.
 
   Args:
     slope: Line slope value. If None, reads from robot.read_linetrace_slope().
@@ -250,17 +336,16 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
   - angle < π/2: line tilts right, turn right
   - angle > π/2: line tilts left, turn left
   """
-  if slope is None:
+  if slope is None: # When the were no args
     slope = robot.linetrace_slope
-
-  if slope is None:
+  if slope is None: # When the robot could not find an appropriate slope
     if time.time() - robot.last_slope_get_time > consts.RESCUE_FLAG_TIME:
-      robot.is_rescue_flag = True
+      robot.write_is_rescue_flag(True)
       return 1500, 1500
     return BASE_SPEED, BASE_SPEED
-  else:
-    robot.write_last_slope_get_time(time.time())
+  robot.write_last_slope_get_time(time.time())
 
+  assert is_valid_number(slope), str(slope)
   angle = math.atan(slope)
   if angle < 0:
     angle += math.pi
@@ -269,11 +354,31 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
 
   steering = int(KP * angle_error)
 
+  # Calculate speed adjustment based on line area
+  line_area = robot.line_area
+  speed_multiplier = 1.0  # Default: full speed
+  
+  if line_area is not None and is_valid_number(line_area):
+    # Reduce speed when line gets smaller
+    # Area thresholds:
+    # > 1000: full speed (100%)
+    # 500-1000: gradual reduction
+    # < 500: significant reduction (60-80%)
+    if line_area < 1000:
+      # Linear interpolation between 0.6 (at area=300) and 1.0 (at area=1000)
+      speed_multiplier = 0.2 + (line_area - consts.MIN_BLACK_LINE_AREA) / (1000 - consts.MIN_BLACK_LINE_AREA) * 0.8
+      speed_multiplier = max(0.6, min(1.0, speed_multiplier))
+      logger.info(f"Line area: {line_area:.0f}, speed multiplier: {speed_multiplier:.2f}")
+
+  # Apply speed multiplier only to the increment above 1500 (stop position)
+  # 1500 = stop, so we only reduce the forward speed component
+  adjusted_base_speed = 1500 + int((BASE_SPEED - 1500) * speed_multiplier)
+  
   motor_l = clamp(
-      clamp(int(BASE_SPEED - abs(angle_error)**6 * DP), 1500, 2000) - steering,
+      clamp(int(adjusted_base_speed - abs(angle_error)**6 * DP), 1500, 2000) - steering,
       MIN_SPEED, MAX_SPEED)
   motor_r = clamp(
-      clamp(int(BASE_SPEED - abs(angle_error)**6 * DP), 1500, 2000) + steering,
+      clamp(int(adjusted_base_speed - abs(angle_error)**6 * DP), 1500, 2000) + steering,
       MIN_SPEED, MAX_SPEED)
 
   return motor_l, motor_r
@@ -292,7 +397,6 @@ def find_best_target() -> None:
   if time.time() - robot.last_yolo_time > 0.1:
     yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
     robot.write_last_yolo_time(time.time())
-  logger.debug("Find target")
   current_time = time.time()
   result_image = robot.rescue_image
   if yolo_results and isinstance(yolo_results, list) and len(yolo_results) > 0:
@@ -371,7 +475,7 @@ def find_best_target() -> None:
           best_target_h = h
         robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
         logger.debug(
-            f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
+            f"Override Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
     if best_angle is None:
       robot.write_rescue_offset(None)
@@ -389,8 +493,18 @@ def catch_ball() -> int:
   logger.info(
       f"Caught ball type: {consts.TargetList(robot.rescue_target).name}")
   robot.set_speed(1500, 1500)
-  robot.set_arm(1400, 0)
   robot.send_speed()
+  robot.set_speed(1400 , 1400)
+  prev_time = time.time()
+  while time.time() - prev_time < 0.8:
+    robot.update_button_stat()
+    if robot.robot_stop:
+      robot.set_speed(1500, 1500)
+      robot.send_speed()
+      logger.info("Catch interrupted by button")
+      return 1
+    robot.send_speed()
+  robot.set_arm(1400, 0)
   robot.send_arm()
   robot.set_speed(1650, 1650)
   prev_time = time.time()
@@ -535,7 +649,6 @@ def release_ball() -> bool:
     robot.send_speed()
   robot.set_speed(1500, 1500)
   robot.send_speed()
-  set_target()
   return True
 
 
@@ -561,7 +674,7 @@ def change_position() -> bool:
   return True  # Completed successfully
 
 
-def set_target() -> bool:
+def set_target_turning_angle() -> bool:
   if robot.rescue_turning_angle is None:
     robot.write_rescue_turning_angle(0)
     return False
@@ -574,6 +687,13 @@ def set_target() -> bool:
     robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
   return True
 
+def normalize_rescue_turning_angle() -> int:
+  if robot.rescue_turning_angle >= 720:
+    return 720
+  elif robot.rescue_turning_angle >= 360:
+    return 360
+  else:
+    return 0
 
 def calculate_ball() -> tuple[int, int]:
   angle = robot.rescue_offset
@@ -631,20 +751,20 @@ def calculate_exit() -> tuple[int, int]:
                MAX_SPEED), clamp(int(base_R), MIN_SPEED, MAX_SPEED)
 
 
-def retry_catch() -> bool:
-  global catch_failed_cnt
-  catch_failed_cnt += 1
-  prev_time = time.time()
-  robot.set_speed(1300, 1300)
-  while time.time() - prev_time > 2:  #TODO(K10-K10): random walk
-    robot.send_speed()
-    robot.update_button_stat()
-    if robot.robot_stop:
-      robot.set_speed(1500, 1500)
-      robot.send_speed()
-      logger.info("Turn interrupted by button during approach")
-      return False
-  return True
+# def retry_catch() -> bool:
+#   global catch_failed_cnt
+#   catch_failed_cnt += 1
+#   prev_time = time.time()
+#   robot.set_speed(1300, 1300)
+#   while time.time() - prev_time > 2:  #TODO(K10-K10): random walk
+#     robot.send_speed()
+#     robot.update_button_stat()
+#     if robot.robot_stop:
+#       robot.set_speed(1500, 1500)
+#       robot.send_speed()
+#       logger.info("Turn interrupted by button during approach")
+#       return False
+#   return True
 
 
 logger.debug("Objects Initialized")
@@ -658,6 +778,7 @@ if __name__ == "__main__":
   robot.set_arm(3072, 0)
   robot.send_arm()
   robot.send_speed()
+  robot.write_last_slope_get_time(time.time())
   while True:
     robot.update_button_stat()
     if robot.robot_stop:
@@ -672,34 +793,42 @@ if __name__ == "__main__":
         robot.write_rescue_target(consts.TargetList.EXIT)
       logger.debug("robot stop true, stopping..")
       robot.write_linetrace_stop(False)
+      robot.write_is_rescue_flag(False)
+      robot.write_last_slope_get_time(time.time())
     elif robot.is_rescue_flag:
       find_best_target()
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
         robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
-        set_target()
+        set_target_turning_angle()
       else:
+        robot.write_rescue_turning_angle(normalize_rescue_turning_angle())
         if robot.rescue_target == consts.TargetList.EXIT.value:
           motorl, motorr = calculate_exit()
           robot.set_speed(motorl, motorr)
           if robot.linetrace_slope is not None:
             robot.set_speed(1500, 1500)
             robot.send_speed()
-            robot.is_rescue_flag = False
+            robot.write_is_rescue_flag(False)
         elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
           motorl, motorr = calculate_ball()
           robot.set_speed(motorl, motorr)
           robot.send_speed()
           if robot.rescue_ball_flag:
             is_not_took = catch_ball()
-            if is_not_took:
-              retry_catch()
+            if robot.rescue_target == consts.TargetList.SILVER_BALL.value:
+              robot.write_rescue_target(consts.TargetList.GREEN_CAGE)
+            if robot.rescue_target == consts.TargetList.BLACK_BALL.value:
+              robot.write_rescue_target(consts.TargetList.RED_CAGE)
+            # if is_not_took:
+              # retry_catch()
         else:
           motorl, motorr = calculate_cage()
           robot.set_speed(motorl, motorr)
           robot.send_speed()
           if robot.rescue_size >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
+            set_target_turning_angle()
         robot.set_speed(motorl, motorr)
     else:
       if not robot.linetrace_stop:
@@ -707,8 +836,15 @@ if __name__ == "__main__":
         if should_process_green_mark():
           execute_green_mark_turn()
         else:
-          motorl, motorr = calculate_motor_speeds()
-          robot.set_speed(motorl, motorr)
+          # Check if line recovery is needed (small line area + steep angle)
+          angle_error = get_current_angle_error()
+          line_area = robot.line_area
+          
+          if angle_error is not None and should_execute_line_recovery(line_area, angle_error):
+            execute_line_recovery()
+          else:
+            motorl, motorr = calculate_motor_speeds()
+            robot.set_speed(motorl, motorr)
       else:
         logger.debug("Red stop")
         robot.set_speed(1500, 1500)

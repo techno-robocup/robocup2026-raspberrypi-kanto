@@ -96,7 +96,7 @@ TURN_CHECKPOINT_SIZE = 10  # Size of area to check (pixels)
 
 RESCUE_FLAG_TIME = 3.0
 
-lower_green = np.array([20, 130, 90])
+lower_green = np.array([20, 100, 90])
 upper_green = np.array([100, 255, 255])
 
 lower_red = np.array([160, 70, 110])

@@ -734,6 +734,7 @@ if __name__ == "__main__":
         if should_process_green_mark():
           execute_green_mark_turn()
         elif ultrasonic_info[0] <= 3: # TODO: The index is really wired, the return value is including some bug, but not sure what is the problem
+          logger.info("Object avoidance triggered")
           robot.set_speed(1650,1350)
           sleep_sec(1, robot.send_speed)
           while robot.linetrace_slope is not None:

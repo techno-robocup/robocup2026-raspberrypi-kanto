@@ -239,6 +239,7 @@ def execute_green_mark_turn() -> bool:
   time.sleep(0.8)
   robot.set_speed(1500, 1500)
   robot.send_speed()
+  robot.write_last_slope_get_time(time.time())
   return True  # Completed successfully
 
 

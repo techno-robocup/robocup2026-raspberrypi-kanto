@@ -741,7 +741,7 @@ if __name__ == "__main__":
             motorl, motorr = calculate_motor_speeds()
             robot.set_speed(motorl, motorr)
       else:
-        logger.debug("Red stop")
+        logger.info("Red stop")
         robot.set_speed(1500, 1500)
     robot.send_speed()
 logger.debug("Program Stop")

@@ -105,7 +105,7 @@ RESCUE_FLAG_TIME = 5.0
 lower_green = np.array([20, 100, 90])
 upper_green = np.array([100, 255, 255])
 
-lower_red = np.array([160, 70, 110])
+lower_red = np.array([160, 100, 110])
 upper_red = np.array([179, 255, 255])
 
 if __name__ == "__main__":

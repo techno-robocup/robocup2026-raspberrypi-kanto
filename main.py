@@ -739,7 +739,7 @@ if __name__ == "__main__":
           sleep_sec(1, robot.send_speed)
           while robot.linetrace_slope is not None:
             robot.set_speed(1400, 1600)
-            robot.send_speed
+            robot.send_speed()
             if robot.robot_stop:
               logger.info("Robot interrupted during object avoidance")
               break

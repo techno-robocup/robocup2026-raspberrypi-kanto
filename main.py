@@ -676,6 +676,7 @@ def calculate_exit() -> tuple[int, int]:
 logger.debug("Objects Initialized")
 
 if __name__ == "__main__":
+  assert isinstance(robot, modules.robot.Robot)
   # Register signal handler for graceful shutdown
   signal.signal(signal.SIGINT, signal_handler)
 

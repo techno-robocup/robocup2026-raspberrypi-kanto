@@ -202,9 +202,9 @@ class Robot:
         f"Rescue {self.__MOTOR_ARM:4d} {self.__MOTOR_WIRE}")
 
   @property
-  def ultrasonic(self) -> List[int]:
+  def ultrasonic(self) -> List[float]:
     assert self.__uart_device != None
-    return list(map(int,
+    return list(map(float,
                     Message(self.__uart_device.send("GET usonic")).Message))
 
   @property

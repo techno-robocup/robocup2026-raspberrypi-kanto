@@ -468,6 +468,8 @@ def find_best_target() -> None:
     - robot.rescue_ball_flag: True if ball is close enough to catch.
     - robot.rescue_target: May switch to SILVER_BALL on override.
   """
+  # Reset ball flag at start - will be set True only if catchable ball detected
+  robot.write_rescue_ball_flag(False)
   yolo_results = None
   if time.time() - robot.last_yolo_time > 0.1:
     yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
@@ -720,6 +722,7 @@ def calculate_ball() -> tuple[int, int]:
   angle = robot.rescue_offset
   size = robot.rescue_size
   if angle is None or size is None:
+    logger.warning(f"Calculate ball was called, but angle or size is None. angle: {angle}, size: {size}")
     return 1500, 1500
   diff_angle = 0
   if abs(angle) > 30:
@@ -864,7 +867,6 @@ if __name__ == "__main__":
           robot.send_speed()
           if robot.rescue_size is not None and robot.rescue_size >= consts.BALL_CATCH_SIZE * 3.8:
             release_ball()
-        robot.set_speed(motorl, motorr)
     else:
       if not robot.linetrace_stop:
         ultrasonic_info = robot.ultrasonic

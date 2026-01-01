@@ -562,7 +562,7 @@ def catch_ball() -> int:
   #   return 1
 
 
-def release_ball() -> int:
+def release_ball() -> bool:
   logger.debug("Executing release_ball()")
   robot.set_speed(1700, 1700)
   sleep_sec(2.2)

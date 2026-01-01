@@ -45,7 +45,15 @@ EOP = 1  # Exit Offset P
 catch_failed_cnt = 0
 
 
-def is_valid_number(value):
+def is_valid_number(value) -> bool:
+  """Check if value is a valid finite number (int or float, not bool).
+
+  Args:
+    value: The value to check.
+
+  Returns:
+    True if value is a finite int or float (excluding bool).
+  """
   return isinstance(
       value,
       (int, float)) and not isinstance(value, bool) and math.isfinite(value)
@@ -54,7 +62,16 @@ def is_valid_number(value):
 def clamp(value: int,
           min_val: int = MIN_SPEED,
           max_val: int = MAX_SPEED) -> int:
-  """Clamp value between min and max."""
+  """Clamp value between min and max.
+
+  Args:
+    value: The value to clamp.
+    min_val: Minimum allowed value (default: MIN_SPEED).
+    max_val: Maximum allowed value (default: MAX_SPEED).
+
+  Returns:
+    The clamped value within [min_val, max_val].
+  """
   return max(min_val, min(max_val, value))
 
 
@@ -396,7 +413,14 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
 
 
 def signal_handler(sig, frame):
-  """Handle SIGINT for graceful shutdown."""
+  """Handle SIGINT (Ctrl+C) for graceful shutdown.
+
+  Stops the robot motors and exits the program cleanly.
+
+  Args:
+    sig: Signal number received.
+    frame: Current stack frame (unused).
+  """
   logger.info("Received shutdown signal")
   robot.set_speed(1500, 1500)
   robot.send_speed()
@@ -404,7 +428,18 @@ def signal_handler(sig, frame):
 
 
 def sleep_sec(sec: float, function=None) -> int:
-  """Sleep for the specified number of seconds, checking for robot stop."""
+  """Sleep for the specified duration while monitoring robot stop button.
+
+  Continuously sends motor speed commands during sleep and can execute
+  an optional callback function each iteration.
+
+  Args:
+    sec: Duration to sleep in seconds.
+    function: Optional callback function to execute each iteration.
+
+  Returns:
+    1 if interrupted by robot stop button, 0 if completed normally.
+  """
   prev_time = time.time()
   while time.time() - prev_time < sec:
     robot.update_button_stat()
@@ -420,6 +455,19 @@ def sleep_sec(sec: float, function=None) -> int:
 
 
 def find_best_target() -> None:
+  """Detect and track the best rescue target using YOLO object detection.
+
+  Runs YOLO inference on the rescue camera image to find balls and cages.
+  Updates robot state with the offset angle and size of the closest target
+  matching the current rescue_target type. Also handles override logic
+  when searching for black ball but finding silver ball.
+
+  Updates:
+    - robot.rescue_offset: Horizontal offset from image center (pixels).
+    - robot.rescue_size: Area of the detected target (pixels^2).
+    - robot.rescue_ball_flag: True if ball is close enough to catch.
+    - robot.rescue_target: May switch to SILVER_BALL on override.
+  """
   yolo_results = None
   if time.time() - robot.last_yolo_time > 0.1:
     yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
@@ -523,6 +571,15 @@ def find_best_target() -> None:
 
 
 def catch_ball() -> int:
+  """Execute the ball catching sequence using the robot arm.
+
+  Performs a timed sequence of motor and arm movements to approach,
+  lower the arm, grab the ball, and lift it. The sequence includes
+  forward movement, arm positioning, and grip activation.
+
+  Returns:
+    0 on successful completion (catch verification is not implemented).
+  """
   logger.debug("Executing catch_ball()")
   # Store which ball type we're catching
   logger.info(
@@ -571,6 +628,15 @@ def catch_ball() -> int:
 
 
 def release_ball() -> bool:
+  """Execute the ball release sequence at the cage.
+
+  Drives forward to approach the cage, opens the gripper to release
+  the ball, backs up slightly, then performs a 180-degree turn to
+  face away from the cage. Calls set_target() to determine next target.
+
+  Returns:
+    True on successful completion.
+  """
   logger.debug("Executing release_ball()")
   robot.set_speed(1700, 1700)
   sleep_sec(2.2)
@@ -595,6 +661,14 @@ def release_ball() -> bool:
 
 
 def change_position() -> bool:
+  """Rotate approximately 30 degrees to search for targets.
+
+  Called when no target is visible. Rotates the robot in place,
+  then runs find_best_target() to check for newly visible targets.
+
+  Returns:
+    True on successful completion.
+  """
   logger.debug("Change position")
   prev_time = time.time()
   robot.set_speed(1750, 1250)
@@ -608,6 +682,17 @@ def change_position() -> bool:
 
 
 def set_target() -> bool:
+  """Set the rescue target based on cumulative rotation angle.
+
+  Determines which target to search for based on how much the robot
+  has rotated during the rescue phase:
+    - 0-360 degrees: Search for SILVER_BALL
+    - 360-720 degrees: Search for BLACK_BALL
+    - >720 degrees: Search for EXIT
+
+  Returns:
+    True if target was set, False if turning angle was None.
+  """
   if robot.rescue_turning_angle is None:
     robot.write_rescue_turning_angle(0)
     return False
@@ -622,6 +707,16 @@ def set_target() -> bool:
 
 
 def calculate_ball() -> tuple[int, int]:
+  """Calculate motor speeds to approach a ball target.
+
+  Uses the ball's horizontal offset for steering and its apparent size
+  (area) for speed control. Larger offset = more steering correction.
+  Smaller size = faster approach speed (ball is further away).
+
+  Returns:
+    Tuple of (left_motor_speed, right_motor_speed) in range [MIN_SPEED, MAX_SPEED].
+    Returns (1500, 1500) if target data is unavailable.
+  """
   angle = robot.rescue_offset
   size = robot.rescue_size
   if angle is None or size is None:
@@ -647,6 +742,15 @@ def calculate_ball() -> tuple[int, int]:
 
 
 def calculate_cage() -> tuple[int, int]:
+  """Calculate motor speeds to approach a cage target.
+
+  Uses the cage's horizontal offset for steering correction.
+  Applies a constant forward speed bias for steady approach.
+
+  Returns:
+    Tuple of (left_motor_speed, right_motor_speed) in range [MIN_SPEED, MAX_SPEED].
+    Returns (1500, 1500) if target data is unavailable.
+  """
   angle = robot.rescue_offset
   size = robot.rescue_size
   if angle is None or size is None:
@@ -661,6 +765,15 @@ def calculate_cage() -> tuple[int, int]:
 
 
 def calculate_exit() -> tuple[int, int]:
+  """Calculate motor speeds to approach the exit target.
+
+  Uses the exit marker's horizontal offset for steering correction.
+  Includes a deadband (±10) to reduce oscillation when nearly aligned.
+
+  Returns:
+    Tuple of (left_motor_speed, right_motor_speed) in range [MIN_SPEED, MAX_SPEED].
+    Returns (1500, 1500) if target data is unavailable.
+  """
   angle = robot.rescue_offset
   size = robot.rescue_size
   if angle is None or size is None:

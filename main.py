@@ -474,7 +474,7 @@ def find_best_target() -> None:
   """
   # Reset ball flag at start - will be set True only if catchable ball detected
   robot.write_rescue_ball_flag(False)
-  yolo_results = None
+  # yolo_results = None
   with yolo_lock:
     yolo_results = consts.MODEL(robot.rescue_image, verbose=False)
     robot.write_last_yolo_time(time.time())

@@ -835,6 +835,12 @@ if __name__ == "__main__":
   while True:
     robot.update_button_stat()
     if robot.robot_stop:
+      if robot.rescue_target == consts.TargetList.SILVER_BALL.value or robot.rescue_target == consts.TargetList.GREEN_CAGE.value:
+        robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
+      elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.RED_CAGE.value:
+        robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
+      else:
+        robot.write_rescue_target(consts.TargetList.EXIT.value)
       robot.set_speed(1500, 1500)
       robot.set_arm(3072, 0)
       robot.send_speed()

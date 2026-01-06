@@ -239,17 +239,21 @@ def Rescue_precallback_func(request: CompletedRequest) -> None:
     Rescue_Depth_precallback_func(request)
   else:
     # In rescue mode - just capture image for YOLO detection
-    logger.info("Rescue Camera pre-callback triggered (rescue mode)")
+    logger.debug("Rescue Camera pre-callback triggered (rescue mode)")
+    # In rescue mode we only capture the lores image for YOLO.
+    # Depth prediction is expensive and should not run in this hot
+    # callback path (it was causing the callback to be called very
+    # infrequently). Depth prediction can be run elsewhere if needed.
     with MappedArray(request, "lores") as mapped_array:
       image = mapped_array.array
       image = cv2.rotate(image, cv2.ROTATE_180)
       current_time = time.time()
       cv2.imwrite(f"bin/{current_time:.3f}_rescue_origin.jpg", image)
-      image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-      depth = predict_depth(image_rgb)
-      if depth is not None:
-        depth_u8 = _normalize_depth_array(depth)
-        cv2.imwrite(f"bin/{current_time:.3f}_rescue_depth.jpg", depth_u8)
+      # image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+      # depth = predict_depth(image_rgb)
+      # if depth is not None:
+      #   depth_u8 = _normalize_depth_array(depth)
+      #   cv2.imwrite(f"bin/{current_time:.3f}_rescue_depth.jpg", depth_u8)
       if robot is not None:
         robot.write_rescue_image(image)
 

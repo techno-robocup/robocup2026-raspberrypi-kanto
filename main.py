@@ -42,7 +42,7 @@ MIN_SPEED = 1000
 KP = 230
 DP = 180
 BOP = 0.05  # Ball Offset P
-BSP = 3  # Ball Size P
+BSP = 6  # Ball Size P
 COP = 0.3  # Cage Offset P
 EOP = 1  # Exit Offset P
 

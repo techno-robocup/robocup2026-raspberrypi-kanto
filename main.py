@@ -691,7 +691,7 @@ def change_position() -> bool:
   """
   logger.debug("Change position")
   robot.set_speed(1750, 1250)
-  sleep_sec(consts.TURN_30_TIME)
+  sleep_sec(consts.TURN_20_TIME)
   robot.set_speed(1500, 1500)
   sleep_sec(0.2)
   find_best_target()

@@ -47,7 +47,7 @@ MIN_SPEED = 1000
 KP = 230
 DP = 180
 BOP = 0.05  # Ball Offset P
-BSP = 3  # Ball Size P
+BSP = 2  # Ball Size P
 COP = 0.3  # Cage Offset P
 EOP = 1  # Exit Offset P
 
@@ -740,8 +740,8 @@ def calculate_ball() -> tuple[int, int]:
     diff_angle = 0
   dist_term = 0
   if consts.BALL_CATCH_SIZE > size:
-    dist_term = (math.sqrt(consts.BALL_CATCH_SIZE) - math.sqrt(size)) * BSP
-  dist_term = int(max(120, dist_term))
+    dist_term = (math.sqrt(consts.BALL_CATCH_SIZE) - math.sqrt(size)) ** 2 * BSP
+  dist_term = int(max(250, dist_term))
   base_L = 1500 + diff_angle + dist_term
   base_R = 1500 - diff_angle + dist_term
   base_L = int(base_L)

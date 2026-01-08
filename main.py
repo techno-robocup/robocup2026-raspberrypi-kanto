@@ -658,7 +658,7 @@ def release_ball() -> bool:
   """
   logger.debug("Executing release_ball()")
   robot.set_speed(1700, 1700)
-  sleep_sec(1)
+  sleep_sec(1.5)
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_speed(1400, 1400)

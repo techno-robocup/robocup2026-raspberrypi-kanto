@@ -849,118 +849,122 @@ if __name__ == "__main__":
   robot.write_is_rescue_flag(False)
   robot.write_last_slope_get_time(time.time())
   while True:
-    robot.update_button_stat()
-    if robot.robot_stop:
-      if robot.rescue_target == consts.TargetList.SILVER_BALL.value or robot.rescue_target == consts.TargetList.GREEN_CAGE.value:
-        robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
-      elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.RED_CAGE.value:
-        robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
-      else:
-        robot.write_rescue_target(consts.TargetList.EXIT.value)
-      robot.set_speed(1500, 1500)
-      robot.set_arm(3072, 0)
-      robot.send_speed()
-      robot.send_arm()
-      robot.write_rescue_turning_angle(0)
-      logger.debug("robot stop true, stopping..")
-      robot.write_linetrace_stop(False)
-      robot.write_is_rescue_flag(False)
-      robot.write_last_slope_get_time(time.time())
-    elif robot.is_rescue_flag:
-      find_best_target()
-      try:
-        logger.info(
-            f"Searching for target: {consts.TargetList(robot.rescue_target).name} (id={robot.rescue_target})"
-        )
-      except Exception:
-        logger.info(f"Searching for target id: {robot.rescue_target}")
-      if (robot.rescue_offset is None) or (robot.rescue_size is None):
-        change_position()
-        robot.write_rescue_turning_angle(robot.rescue_turning_angle + 20)
-        # Only call set_target() if searching for balls (rotation-based logic).
-        # For cages/exit, keep searching the current target.
-        if robot.rescue_target in [
-            consts.TargetList.SILVER_BALL.value,
-            consts.TargetList.BLACK_BALL.value
-        ]:
-          set_target()
-      else:
-        if robot.rescue_target == consts.TargetList.EXIT.value:
-          motorl, motorr = calculate_exit()
-          robot.set_speed(motorl, motorr)
-          robot.send_speed()
-          if robot.linetrace_slope is not None:
-            robot.set_speed(1500, 1500)
-            robot.send_speed()
-            robot.write_is_rescue_flag(False)
-        elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
-          motorl, motorr = calculate_ball()
-          robot.set_speed(motorl, motorr)
-          robot.send_speed()
-          if robot.rescue_ball_flag:
-            is_not_took = catch_ball()
-            if robot.rescue_target == consts.TargetList.SILVER_BALL.value:
-              robot.write_rescue_target(consts.TargetList.GREEN_CAGE.value)
-            elif robot.rescue_target == consts.TargetList.BLACK_BALL.value:
-              robot.write_rescue_target(consts.TargetList.RED_CAGE.value)
-            # After catching, clear cached target data and force an immediate
-            # YOLO evaluation so the robot can detect and move toward the cage.
-            robot.write_rescue_offset(None)
-            robot.write_rescue_size(None)
-            robot.write_rescue_y(None)
-            robot.write_last_yolo_time(0)
-            logger.info(
-                "Post-catch: reset rescue_offset/size/y and forced YOLO run")
+    try:
+      robot.update_button_stat()
+      if robot.robot_stop:
+        if robot.rescue_target == consts.TargetList.SILVER_BALL.value or robot.rescue_target == consts.TargetList.GREEN_CAGE.value:
+          robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
+        elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.RED_CAGE.value:
+          robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
         else:
-          motorl, motorr = calculate_cage()
-          robot.set_speed(motorl, motorr)
-          robot.send_speed()
-          if robot.rescue_size is not None and robot.rescue_size >= consts.IMAGE_SZ * 0.5 and robot.rescue_y is not None and robot.rescue_y > (
-              robot.rescue_image.shape[0] * 1 / 2):
-            release_ball()
-    else:
-      if not robot.linetrace_stop:
-        ultrasonic_info = robot.ultrasonic
-        # Check for green mark intersections before normal line following
-        logger.info(ultrasonic_info)
-        if should_process_green_mark():
-          execute_green_mark_turn()
-        elif ultrasonic_info[
-            0] <= 3:  # TODO: The index is really wired, the return value is including some bug, but not sure what is the problem
-          logger.info("Object avoidance triggered")
-          robot.set_speed(1400, 1400)
-          sleep_sec(1, robot.send_speed)
-          robot.set_speed(1750, 1250)
-          sleep_sec(1.7, robot.send_speed)
-          while robot.linetrace_slope is None or robot.line_area <= consts.MIN_OBJECT_AVOIDANCE_LINE_AREA:
-            logger.info("Turning around in object avoidance...")
-            robot.write_last_slope_get_time(time.time())
-            robot.set_speed(1550, 1800)
-            robot.send_speed()
-            robot.update_button_stat()
-            if robot.robot_stop:
-              logger.info("Robot interrupted during object avoidance")
-              break
-          logger.info(
-              f"Ejecting object avoidance by {robot.linetrace_slope} {robot.line_area}"
-          )
-          robot.set_speed(1600, 1600)
-          sleep_sec(1)
-          robot.set_speed(1600, 1400)
-          sleep_sec(1)
-        else:
-          # Check if line recovery is needed (small line area + steep angle)
-          angle_error = get_current_angle_error()
-          line_area = robot.line_area
-
-          if angle_error is not None and should_execute_line_recovery(
-              line_area, angle_error):
-            execute_line_recovery()
-          else:
-            motorl, motorr = calculate_motor_speeds()
-            robot.set_speed(motorl, motorr)
-      else:
-        logger.info("Red stop")
+          robot.write_rescue_target(consts.TargetList.EXIT.value)
         robot.set_speed(1500, 1500)
-    robot.send_speed()
+        robot.set_arm(3072, 0)
+        robot.send_speed()
+        robot.send_arm()
+        robot.write_rescue_turning_angle(0)
+        logger.debug("robot stop true, stopping..")
+        robot.write_linetrace_stop(False)
+        robot.write_is_rescue_flag(False)
+        robot.write_last_slope_get_time(time.time())
+      elif robot.is_rescue_flag:
+        find_best_target()
+        try:
+          logger.info(
+              f"Searching for target: {consts.TargetList(robot.rescue_target).name} (id={robot.rescue_target})"
+          )
+        except Exception:
+          logger.info(f"Searching for target id: {robot.rescue_target}")
+        if (robot.rescue_offset is None) or (robot.rescue_size is None):
+          change_position()
+          robot.write_rescue_turning_angle(robot.rescue_turning_angle + 20)
+          # Only call set_target() if searching for balls (rotation-based logic).
+          # For cages/exit, keep searching the current target.
+          if robot.rescue_target in [
+              consts.TargetList.SILVER_BALL.value,
+              consts.TargetList.BLACK_BALL.value
+          ]:
+            set_target()
+        else:
+          if robot.rescue_target == consts.TargetList.EXIT.value:
+            motorl, motorr = calculate_exit()
+            robot.set_speed(motorl, motorr)
+            robot.send_speed()
+            if robot.linetrace_slope is not None:
+              robot.set_speed(1500, 1500)
+              robot.send_speed()
+              robot.write_is_rescue_flag(False)
+          elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
+            motorl, motorr = calculate_ball()
+            robot.set_speed(motorl, motorr)
+            robot.send_speed()
+            if robot.rescue_ball_flag:
+              is_not_took = catch_ball()
+              if robot.rescue_target == consts.TargetList.SILVER_BALL.value:
+                robot.write_rescue_target(consts.TargetList.GREEN_CAGE.value)
+              elif robot.rescue_target == consts.TargetList.BLACK_BALL.value:
+                robot.write_rescue_target(consts.TargetList.RED_CAGE.value)
+              # After catching, clear cached target data and force an immediate
+              # YOLO evaluation so the robot can detect and move toward the cage.
+              robot.write_rescue_offset(None)
+              robot.write_rescue_size(None)
+              robot.write_rescue_y(None)
+              robot.write_last_yolo_time(0)
+              logger.info(
+                  "Post-catch: reset rescue_offset/size/y and forced YOLO run")
+          else:
+            motorl, motorr = calculate_cage()
+            robot.set_speed(motorl, motorr)
+            robot.send_speed()
+            if robot.rescue_size is not None and robot.rescue_size >= consts.IMAGE_SZ * 0.5 and robot.rescue_y is not None and robot.rescue_y > (
+                robot.rescue_image.shape[0] * 1 / 2):
+              release_ball()
+      else:
+        if not robot.linetrace_stop:
+          ultrasonic_info = robot.ultrasonic
+          # Check for green mark intersections before normal line following
+          logger.info(ultrasonic_info)
+          if should_process_green_mark():
+            execute_green_mark_turn()
+          elif ultrasonic_info[
+              0] <= 3:  # TODO: The index is really wired, the return value is including some bug, but not sure what is the problem
+            logger.info("Object avoidance triggered")
+            robot.set_speed(1400, 1400)
+            sleep_sec(1, robot.send_speed)
+            robot.set_speed(1750, 1250)
+            sleep_sec(1.7, robot.send_speed)
+            while robot.linetrace_slope is None or robot.line_area <= consts.MIN_OBJECT_AVOIDANCE_LINE_AREA:
+              logger.info("Turning around in object avoidance...")
+              robot.write_last_slope_get_time(time.time())
+              robot.set_speed(1550, 1800)
+              robot.send_speed()
+              robot.update_button_stat()
+              if robot.robot_stop:
+                logger.info("Robot interrupted during object avoidance")
+                break
+            logger.info(
+                f"Ejecting object avoidance by {robot.linetrace_slope} {robot.line_area}"
+            )
+            robot.set_speed(1600, 1600)
+            sleep_sec(1)
+            robot.set_speed(1600, 1400)
+            sleep_sec(1)
+          else:
+            # Check if line recovery is needed (small line area + steep angle)
+            angle_error = get_current_angle_error()
+            line_area = robot.line_area
+
+            if angle_error is not None and should_execute_line_recovery(
+                line_area, angle_error):
+              execute_line_recovery()
+            else:
+              motorl, motorr = calculate_motor_speeds()
+              robot.set_speed(motorl, motorr)
+        else:
+          logger.info("Red stop")
+          robot.set_speed(1500, 1500)
+      robot.send_speed()
+    except Exception as e:
+      logger.exception(f"Unexpected exception in main loop: {e}")
+      # Continue running after logging the exception
 logger.debug("Program Stop")

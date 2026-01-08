@@ -350,7 +350,9 @@ def detect_red_marks(orig_image: np.ndarray) -> None:
 
   hsv = cv2.cvtColor(orig_image, cv2.COLOR_RGB2HSV)
 
-  red_mask = cv2.inRange(hsv, consts.lower_red, consts.upper_red)
+  red_mask1 = cv2.inRange(hsv, consts.lower_red1, consts.upper_red1)
+  red_mask2 = cv2.inRange(hsv, consts.lower_red2, consts.upper_red2)
+  red_mask = cv2.bitwise_or(red_mask1, red_mask2)
 
   kernel = np.ones((3, 3), np.uint8)
   red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel, iterations=3)

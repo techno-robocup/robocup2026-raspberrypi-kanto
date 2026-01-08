@@ -870,7 +870,7 @@ if __name__ == "__main__":
         logger.info(f"Searching for target id: {robot.rescue_target}")
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
-        robot.write_rescue_turning_angle(robot.rescue_turning_angle + 30)
+        robot.write_rescue_turning_angle(robot.rescue_turning_angle + 20)
         # Only call set_target() if searching for balls (rotation-based logic).
         # For cages/exit, keep searching the current target.
         if robot.rescue_target in [consts.TargetList.SILVER_BALL.value, consts.TargetList.BLACK_BALL.value]:

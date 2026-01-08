@@ -400,12 +400,13 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
     # < 500: significant reduction (60-80%)
     if line_area < 1000:
       # Linear interpolation between 0.6 (at area=300) and 1.0 (at area=1000)
-      speed_multiplier = 0.2 + (line_area - consts.MIN_BLACK_LINE_AREA) / (
-          1000 - consts.MIN_BLACK_LINE_AREA) * 0.8
-      speed_multiplier = max(0.6, min(1.0, speed_multiplier))
-      logger.info(
-          f"Line area: {line_area:.0f}, speed multiplier: {speed_multiplier:.2f}"
-      )
+      denominator = 1000 - consts.MIN_BLACK_LINE_AREA
+      if denominator > 0:
+        speed_multiplier = 0.2 + (line_area - consts.MIN_BLACK_LINE_AREA) / denominator * 0.8
+        speed_multiplier = max(0.6, min(1.0, speed_multiplier))
+        logger.info(
+            f"Line area: {line_area:.0f}, speed multiplier: {speed_multiplier:.2f}"
+        )
 
   # Apply speed multiplier only to the increment above 1500 (stop position)
   # 1500 = stop, so we only reduce the forward speed component

@@ -407,6 +407,11 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
         logger.info(
             f"Line area: {line_area:.0f}, speed multiplier: {speed_multiplier:.2f}"
         )
+      else:
+        logger.warning(
+            f"Invalid configuration: MIN_BLACK_LINE_AREA ({consts.MIN_BLACK_LINE_AREA}) >= 1000. "
+            f"Using default speed multiplier: {speed_multiplier:.2f}"
+        )
 
   # Apply speed multiplier only to the increment above 1500 (stop position)
   # 1500 = stop, so we only reduce the forward speed component

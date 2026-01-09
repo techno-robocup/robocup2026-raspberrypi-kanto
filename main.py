@@ -723,10 +723,10 @@ def set_target() -> bool:
   if robot.rescue_turning_angle is None:
     robot.write_rescue_turning_angle(0)
     return False
-  if robot.rescue_turning_angle > 720:
+  if robot.rescue_turning_angle >= 720:
     robot.write_rescue_target(consts.TargetList.EXIT.value)
     # robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
-  elif robot.rescue_turning_angle > 360:
+  elif robot.rescue_turning_angle >= 360:
     robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)
   else:
     robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
@@ -736,10 +736,10 @@ def clump_turning_angle() -> bool:
   if robot.rescue_turning_angle is None:
     robot.write_rescue_turning_angle(0)
     return False
-  if robot.rescue_turning_angle > 720:
-    robot.write_rescue_turning_angle(721)
-  elif robot.rescue_turning_angle > 360:
-    robot.write_rescue_turning_angle(361)
+  if robot.rescue_turning_angle >= 720:
+    robot.write_rescue_turning_angle(720)
+  elif robot.rescue_turning_angle >= 360:
+    robot.write_rescue_turning_angle(360)
   else:
     robot.write_rescue_turning_angle(0)
   return True

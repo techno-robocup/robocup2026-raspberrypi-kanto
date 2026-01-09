@@ -203,7 +203,7 @@ def Rescue_Depth_precallback_func(request: CompletedRequest) -> None:
   This is called during LINETRACE mode to perform depth estimation.
   """
   global robot
-  # modules.logger.get_logger().info("Rescue Camera pre-callback triggered")
+  modules.logger.get_logger().info("Rescue Camera pre-callback triggered")
   try:
     with MappedArray(request, "lores") as m:
       image = m.array
@@ -837,7 +837,6 @@ def Linetrace_Camera_Pre_callback(request):
         lastblackline = cx
       if robot is not None:
         robot.write_line_area(line_area)
-        robot.write_line_center_x(cx)
         robot.write_linetrace_slope(calculate_slope(best_contour, cx, cy, w, h))
 
       debug_image = visualize_tracking(image, best_contour, cx, cy)

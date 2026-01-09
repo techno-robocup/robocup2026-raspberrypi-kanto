@@ -327,7 +327,7 @@ def execute_line_recovery() -> bool:
   last_gap_recovery_time = time.time()  # Set cooldown start
 
   start_time = time.time()
-  while robot.line_area is None or robot.line_area <= consts.LINE_RECOVERY_AREA_THRESHOLD * 2:
+  while robot.line_area is None or robot.line_area <= consts.LINE_RECOVERY_AREA_THRESHOLD * 4:
     robot.update_button_stat()
     if robot.robot_stop:
       robot.set_speed(1500, 1500)

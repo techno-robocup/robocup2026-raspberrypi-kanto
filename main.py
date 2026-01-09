@@ -395,14 +395,14 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
   if line_area is not None and is_valid_number(line_area):
     # Reduce speed when line gets smaller
     # Area thresholds:
-    # > 1000: full speed (100%)
-    # 500-1000: gradual reduction
+    # > 3000: full speed (100%)
+    # 500-3000: gradual reduction
     # < 500: significant reduction (60-80%)
-    if line_area < 1000:
-      # Linear interpolation between 0.6 (at area=300) and 1.0 (at area=1000)
+    if line_area < 3000:
+      # Linear interpolation between 0.6 (at area=300) and 1.0 (at area=3000)
       speed_multiplier = 0.2 + (line_area - consts.MIN_BLACK_LINE_AREA) / (
-          1000 - consts.MIN_BLACK_LINE_AREA) * 0.8
-      speed_multiplier = max(0.6, min(1.0, speed_multiplier))
+          3000 - consts.MIN_BLACK_LINE_AREA) * 0.8
+      speed_multiplier = max(0.3, min(1.0, speed_multiplier))
       logger.info(
           f"Line area: {line_area:.0f}, speed multiplier: {speed_multiplier:.2f}"
       )
@@ -411,6 +411,7 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
   # 1500 = stop, so we only reduce the forward speed component
   adjusted_base_speed = 1500 + int((BASE_SPEED - 1500) * speed_multiplier)
 
+  logger.info(f"Current adjusted speed: {clamp(int(adjusted_base_speed - abs(angle_error)**6 * DP), 1500, 2000)}")
   motor_l = clamp(
       clamp(int(adjusted_base_speed - abs(angle_error)**6 * DP), 1500, 2000) -
       steering, MIN_SPEED, MAX_SPEED)

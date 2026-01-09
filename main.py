@@ -627,6 +627,16 @@ def find_best_target() -> None:
     else:
       robot.write_rescue_y(float(best_target_y))
 
+def fix_offset() -> bool:
+  if abs(robot.rescue_offset) > 400:
+    if robot.rescue_offset > 0:
+      robot.set_speed(1600,1300)
+    else:
+      robot.set_speed(1300, 1600)
+    sleep_sec(0.05)
+    return True
+  else:
+    return True
 
 def catch_ball() -> int:
   """Execute the ball catching sequence using the robot arm.
@@ -642,6 +652,7 @@ def catch_ball() -> int:
   # Store which ball type we're catching
   logger.info(
       f"Caught ball type: {consts.TargetList(robot.rescue_target).name}")
+  fix_offset()
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_speed(1400, 1400)
@@ -810,7 +821,7 @@ def calculate_ball() -> tuple[int, int]:
   dist_term = 0
   if consts.BALL_CATCH_SIZE > size:
     dist_term = (math.sqrt(consts.BALL_CATCH_SIZE) - math.sqrt(size))**2 * BSP
-  dist_term = int(max(140, min(dist_term, 250)))
+  dist_term = int(max(100, min(dist_term, 250)))
   base_L = 1500 + diff_angle + dist_term
   base_R = 1500 - diff_angle + dist_term
   base_L = int(base_L)

@@ -37,7 +37,7 @@ uart_dev.connect(selected_device.device, consts.UART_BAUD_RATE,
                  consts.UART_TIMEOUT)
 robot.set_uart_device(uart_dev)
 
-BASE_SPEED = 1710
+BASE_SPEED = 1680
 TURNING_BASE_SPEED = 1650
 assert 1500 < BASE_SPEED < 2000
 assert 1500 < TURNING_BASE_SPEED < 2000
@@ -46,7 +46,7 @@ MAX_SPEED = 2000
 MIN_SPEED = 1000
 KP = 225
 DP = 200
-BOP = 0.05  # Ball Offset P
+BOP = 0.06  # Ball Offset P
 BSP = 1.5  # Ball Size P
 COP = 0.03  # Cage Offset P
 EOP = 0.03  # Exit Offset P
@@ -287,7 +287,8 @@ def should_execute_line_recovery(line_area: Optional[float],
   
   Recovery triggers when:
   1. Line area is below threshold (robot losing sight of line / gap)
-  2. Not in cooldown period (prevents immediate re-trigger after recovery)
+  2. Line center x is too far from image center (robot veering off)
+  3. Cooldown is bypassed when x-offset is significant
   
   Args:
     line_area: Current detected line area in pixels
@@ -301,13 +302,22 @@ def should_execute_line_recovery(line_area: Optional[float],
   if line_area is None or not is_valid_number(line_area):
     return False
   
-  # Check cooldown to prevent looping
-  if time.time() - last_gap_recovery_time < GAP_RECOVERY_COOLDOWN:
+  # Get line center x-coordinate and check offset from image center
+  line_center_x = robot.line_center_x
+  image_center_x = consts.LINETRACE_CAMERA_LORES_WIDTH // 2
+  x_offset = abs(line_center_x - image_center_x) if line_center_x is not None else 0
+  
+  # Check if x-offset is significant (bypasses cooldown)
+  x_offset_significant = x_offset > consts.LINETRACE_CAMERA_LORES_WIDTH * 0.15
+  
+  # Check cooldown only if x-offset is not significant
+  if not x_offset_significant and time.time() - last_gap_recovery_time < GAP_RECOVERY_COOLDOWN:
     return False
 
   area_condition = line_area < consts.LINE_RECOVERY_AREA_THRESHOLD
+  x_offset_condition = x_offset_significant
   
-  return area_condition
+  return area_condition or x_offset_condition
 
 
 def execute_line_recovery() -> bool:
@@ -327,7 +337,7 @@ def execute_line_recovery() -> bool:
   last_gap_recovery_time = time.time()  # Set cooldown start
 
   start_time = time.time()
-  while robot.line_area is None or robot.line_area <= consts.LINE_RECOVERY_AREA_THRESHOLD * 2:
+  while robot.line_area is None or robot.line_area <= consts.LINE_RECOVERY_AREA_THRESHOLD * 4:
     robot.update_button_stat()
     if robot.robot_stop:
       robot.set_speed(1500, 1500)
@@ -428,7 +438,7 @@ def calculate_motor_speeds(slope: Optional[float] = None) -> tuple[int, int]:
   # 1500 = stop, so we only reduce the forward speed component
   adjusted_base_speed = 1500 + int((BASE_SPEED - 1500) * speed_multiplier)
 
-  logger.info(f"Current adjusted speed: {clamp(int(adjusted_base_speed - abs(angle_error)**6 * DP), 1500, 2000)}")
+  # logger.info(f"Current adjusted speed: {clamp(int(adjusted_base_speed - abs(angle_error)**6 * DP), 1500, 2000)}")
   motor_l = clamp(
       clamp(int(adjusted_base_speed - abs(angle_error)**6 * DP), 1500, 2000) -
       steering, MIN_SPEED, MAX_SPEED)
@@ -567,9 +577,12 @@ def find_best_target() -> None:
         logger.info(
             f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
-      elif consts.TargetList.BLACK_BALL.value == robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
+      # elif consts.TargetList.BLACK_BALL.value == robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
+      elif consts.TargetList.SILVER_BALL.value != robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
         logger.info("Override")
         robot.write_rescue_turning_angle(0)
+        if robot.rescue_target in (consts.TargetList.RED_CAGE, consts.TargetList.GREEN_CAGE):
+          drop_ball()
         x_center, y_center, w, h = map(float, box.xywh[0])
         dist = x_center - cx
         area = w * h
@@ -699,6 +712,14 @@ def release_ball() -> bool:
   set_target()
   return True
 
+def drop_ball() -> bool:
+  logger.debug("Drop ball")
+  robot.set_speed(1500,1500)
+  robot.set_arm(1536,0)
+  sleep_sec(0.4)
+  robot.set_arm(3072, 0)
+  robot.send_arm()
+  return 0
 
 def change_position() -> bool:
   """Rotate approximately 30 degrees to search for targets.

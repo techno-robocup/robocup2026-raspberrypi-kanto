@@ -47,7 +47,7 @@ MIN_SPEED = 1000
 KP = 225
 DP = 200
 BOP = 0.05  # Ball Offset P
-BSP = 1.8  # Ball Size P
+BSP = 1.5  # Ball Size P
 COP = 0.03  # Cage Offset P
 EOP = 0.03  # Exit Offset P
 ESP = 2  # Exit Size P
@@ -612,14 +612,14 @@ def catch_ball() -> int:
       f"Caught ball type: {consts.TargetList(robot.rescue_target).name}")
   robot.set_speed(1500, 1500)
   robot.send_speed()
-  robot.set_speed(1400, 1400)
+  robot.set_speed(1370, 1370)
   sleep_sec(1.5)
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_arm(1450, 0)
   robot.send_arm()
   robot.set_speed(1650, 1650)
-  sleep_sec(2)
+  sleep_sec(2.2)
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_arm(1000, 0)

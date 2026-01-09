@@ -47,7 +47,7 @@ MIN_SPEED = 1000
 KP = 225
 DP = 200
 BOP = 0.05  # Ball Offset P
-BSP = 2  # Ball Size P
+BSP = 1.8  # Ball Size P
 COP = 0.03  # Cage Offset P
 EOP = 0.03  # Exit Offset P
 ESP = 2  # Exit Size P
@@ -665,7 +665,7 @@ def release_ball() -> bool:
   """
   logger.debug("Executing release_ball()")
   robot.set_speed(1700, 1700)
-  sleep_sec(1.5)
+  sleep_sec(2.3)
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_speed(1400, 1400)
@@ -891,7 +891,8 @@ if __name__ == "__main__":
         logger.info(f"Searching for target id: {robot.rescue_target}")
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
-        robot.write_rescue_turning_angle(robot.rescue_turning_angle + 20)
+        if not robot.rescue_ball_flag:
+          robot.write_rescue_turning_angle(robot.rescue_turning_angle + 20)
         # Only call set_target() if searching for balls (rotation-based logic).
         # For cages/exit, keep searching the current target.
         if robot.rescue_target in [

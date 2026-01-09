@@ -57,7 +57,7 @@ catch_failed_cnt = 0
 
 # Gap recovery state - timestamp of last recovery to prevent immediate re-trigger
 last_gap_recovery_time: float = 0.0
-GAP_RECOVERY_COOLDOWN = 2.0  # Seconds to wait after recovery before allowing another
+GAP_RECOVERY_COOLDOWN = 0.5  # Seconds to wait after recovery before allowing another
 
 
 def is_valid_number(value) -> bool:
@@ -1007,7 +1007,7 @@ if __name__ == "__main__":
           while robot.linetrace_slope is None or robot.line_area <= consts.MIN_OBJECT_AVOIDANCE_LINE_AREA:
             logger.info("Turning around in object avoidance...")
             robot.write_last_slope_get_time(time.time())
-            robot.set_speed(1550, 1800)
+            robot.set_speed(1580, 1800)
             robot.send_speed()
             robot.update_button_stat()
             if robot.robot_stop:

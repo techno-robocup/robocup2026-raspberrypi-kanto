@@ -49,7 +49,7 @@ DP = 200
 BOP = 0.045  # Ball Offset P
 BSP = 1.5  # Ball Size P
 COP = 0.03  # Cage Offset P
-CSP = 0.07
+CSP = 0.09
 EOP = 0.03  # Exit Offset P
 ESP = 2  # Exit Size P
 
@@ -659,7 +659,7 @@ def catch_ball() -> int:
   robot.set_speed(1600, 1600)
   sleep_sec(2)
   robot.set_speed(1400, 1400)
-  sleep_sec(1)
+  sleep_sec(2.3)
   robot.set_arm(1000, 1)
   sleep_sec(0.5)
   robot.send_arm()
@@ -710,7 +710,7 @@ def release_ball() -> bool:
   sleep_sec(0.5)
   robot.write_rescue_turning_angle(0)
   robot.set_speed(1400, 1400)
-  sleep_sec(1.5)
+  sleep_sec(2.5)
   robot.set_speed(1750, 1250)
   sleep_sec(consts.TURN_180_TIME)
   robot.set_speed(1500, 1500)

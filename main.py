@@ -732,6 +732,17 @@ def set_target() -> bool:
     robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
   return True
 
+def clump_turning_angle() -> bool:
+  if robot.rescue_turning_angle is None:
+    robot.write_rescue_turning_angle(0)
+    return False
+  if robot.rescue_turning_angle > 720:
+    robot.write_rescue_turning_angle(721)
+  elif robot.rescue_turning_angle > 360:
+    robot.write_rescue_turning_angle(361)
+  else:
+    robot.write_rescue_turning_angle(0)
+  return True
 
 def calculate_ball() -> tuple[int, int]:
   """Calculate motor speeds to approach a ball target.
@@ -928,6 +939,7 @@ if __name__ == "__main__":
             logger.info(
                 "Post-catch: reset rescue_offset/size/y and forced YOLO run")
         else:
+          clump_turning_angle()
           motorl, motorr = calculate_cage()
           robot.set_speed(motorl, motorr)
           robot.send_speed()

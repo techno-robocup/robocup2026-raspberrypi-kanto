@@ -833,8 +833,8 @@ def calculate_cage() -> tuple[int, int]:
   diff_angle = angle * COP
   diff_min_max = 100
   diff_angle = clamp(diff_angle, -diff_min_max, diff_min_max)
-  base_L = 1500 + diff_angle + 150
-  base_R = 1500 - diff_angle + 150
+  base_L = 1500 + diff_angle + 180
+  base_R = 1500 - diff_angle + 180
   logger.info(f"offset: {angle} size:{size}")
   logger.info(f"Motor speed L{base_L} R{base_R}")
   return clamp(int(base_L), MIN_SPEED,

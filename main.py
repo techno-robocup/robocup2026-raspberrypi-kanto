@@ -49,7 +49,8 @@ DP = 200
 BOP = 0.05  # Ball Offset P
 BSP = 2  # Ball Size P
 COP = 0.03  # Cage Offset P
-EOP = 1  # Exit Offset P
+EOP = 0.03  # Exit Offset P
+ESP = 2  # Exit Size P
 
 catch_failed_cnt = 0
 
@@ -806,13 +807,21 @@ def calculate_exit() -> tuple[int, int]:
   size = robot.rescue_size
   if angle is None or size is None:
     return 1500, 1500
-  diff_angle = angle * EOP
-  if diff_angle > 0:
-    diff_angle = max(diff_angle - 10, 0)
-  if diff_angle < 0:
-    diff_angle = min(diff_angle + 10, 0)  # TODO(K10-K10):Fix value
-  base_L = 1500 + diff_angle + 150
-  base_R = 1500 - diff_angle + 150
+  if abs(angle) > 30:
+    diff_angle = angle * EOP
+    if diff_angle > 0:
+      diff_angle = max(diff_angle - 10, 0)
+    else:
+      diff_angle = max(diff_angle + 10, 0)
+  else:
+    diff_angle = 0
+  dist_term = 0
+  if consts.BALL_CATCH_SIZE * 3 > size:
+    dist_tern = (math.sqrt(consts.BALL_CATCH_SIZE * 3) - math.sqrt(size)) ** 2 * ESP
+  dist_term = int(max(150, dist_term))
+  base_L = 1500 + diff_angle + dist_term
+  base_R = 1500 - diff_angle + dist_term
+  logger.info(f"offset: {angle} size: {size}")
   logger.info(f"Motor speed L{base_L} R{base_R}")
   return clamp(int(base_L), MIN_SPEED,
                MAX_SPEED), clamp(int(base_R), MIN_SPEED, MAX_SPEED)
@@ -867,6 +876,7 @@ if __name__ == "__main__":
       robot.write_linetrace_stop(False)
       robot.write_is_rescue_flag(False)
       robot.write_last_slope_get_time(time.time())
+      robot.write_rescue_ball_flag(False)
     elif robot.is_rescue_flag:
       find_best_target()
       try:

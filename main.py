@@ -54,6 +54,10 @@ ESP = 2  # Exit Size P
 
 catch_failed_cnt = 0
 
+# Gap recovery state - timestamp of last recovery to prevent immediate re-trigger
+last_gap_recovery_time: float = 0.0
+GAP_RECOVERY_COOLDOWN = 2.0  # Seconds to wait after recovery before allowing another
+
 
 def is_valid_number(value) -> bool:
   """Check if value is a valid finite number (int or float, not bool).
@@ -277,45 +281,53 @@ def execute_green_mark_turn() -> bool:
 
 
 def should_execute_line_recovery(line_area: Optional[float],
-                                 angle_error: float) -> bool:
+                                 angle_error: Optional[float]) -> bool:
   """
   Check if line recovery should be executed.
   
-  Recovery triggers when BOTH conditions are met:
-  1. Line area is below threshold (robot losing sight of line)
-  2. Angle error is steep (robot is at a significant angle to the line)
+  Recovery triggers when:
+  1. Line area is below threshold (robot losing sight of line / gap)
+  2. Not in cooldown period (prevents immediate re-trigger after recovery)
   
   Args:
     line_area: Current detected line area in pixels
-    angle_error: Current angle error from vertical (radians)
+    angle_error: Current angle error from vertical (radians), can be None
   
   Returns:
     True if recovery should be executed
   """
+  global last_gap_recovery_time
+  
   if line_area is None or not is_valid_number(line_area):
+    return False
+  
+  # Check cooldown to prevent looping
+  if time.time() - last_gap_recovery_time < GAP_RECOVERY_COOLDOWN:
     return False
 
   area_condition = line_area < consts.LINE_RECOVERY_AREA_THRESHOLD
-  angle_condition = abs(angle_error) > consts.LINE_RECOVERY_ANGLE_THRESHOLD
-
-  return area_condition and angle_condition
+  
+  return area_condition
 
 
 def execute_line_recovery() -> bool:
   """
   Execute line recovery by backing up to regain line visibility.
   
-  When the robot is losing the line at a steep angle, this function
-  backs up for a short duration to allow the robot to re-acquire the line.
+  When the robot loses sight of the line (gap or veering off), this function
+  backs up until the line is visible again.
   
   Returns:
     True if recovery completed successfully
     False if interrupted by button
   """
+  global last_gap_recovery_time
+  
   logger.info("Executing line recovery - backing up")
+  last_gap_recovery_time = time.time()  # Set cooldown start
 
   start_time = time.time()
-  while robot.line_area <= 5500:
+  while robot.line_area is None or robot.line_area <= consts.LINE_RECOVERY_AREA_THRESHOLD * 2:
     robot.update_button_stat()
     if robot.robot_stop:
       robot.set_speed(1500, 1500)

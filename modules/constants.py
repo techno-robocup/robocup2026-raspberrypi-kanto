@@ -71,19 +71,21 @@ LINETRACE_CAMERA_LORES_HEIGHT = 180
 LINETRACE_CAMERA_LORES_WIDTH = 320
 LINETRACE_CROP_WIDTH_RATIO = 0.6
 
-MIN_BLACK_LINE_AREA = 300
+# FROM THIS LINE, DO NOT REWRITE
+MIN_BLACK_LINE_AREA = 300 # BE CAREFUL WHEN REWRITING THIS VALUE
+# END OF REWRITING PROHIBITION
 
 # Line recovery constants - for backing up when losing the line
-LINE_RECOVERY_AREA_THRESHOLD = 800  # Trigger recovery when line area drops below this
-LINE_RECOVERY_ANGLE_THRESHOLD = 0.20  # Trigger when angle error exceeds this (radians, ~28.6°)
+LINE_RECOVERY_AREA_THRESHOLD = 5000  # Trigger recovery when line area drops below this
+LINE_RECOVERY_ANGLE_THRESHOLD = 0.15  # Trigger when angle error exceeds this (radians, ~28.6°)
 LINE_RECOVERY_BACKUP_TIME = 1.0  # Seconds to back up
-LINE_RECOVERY_BACKUP_SPEED = 1200  # Motor speed for backing up (< 1500 = reverse)
+LINE_RECOVERY_BACKUP_SPEED = 1300  # Motor speed for backing up (< 1500 = reverse)
 MIN_GREEN_AREA = 200
 MIN_RED_AREA = 600
 MIN_OBJECT_AVOIDANCE_LINE_AREA = 5000
 
 TURN_180_TIME = 1.8
-TURN_20_TIME = 0.3
+TURN_18_TIME = 0.32
 
 # Green mark intersection turning times (seconds)
 GREEN_MARK_APPROACH_TIME = 0.5

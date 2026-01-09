@@ -577,12 +577,12 @@ def find_best_target() -> None:
         logger.info(
             f"Detected cls={consts.TargetList(cls).name}, area={area:.1f}, offset={dist:.1f}"
         )
-      # elif consts.TargetList.BLACK_BALL.value == robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
-      elif consts.TargetList.SILVER_BALL.value != robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
+      elif consts.TargetList.BLACK_BALL.value == robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
+      # elif consts.TargetList.SILVER_BALL.value != robot.rescue_target and cls == consts.TargetList.SILVER_BALL.value:
         logger.info("Override")
         robot.write_rescue_turning_angle(0)
-        if robot.rescue_target in (consts.TargetList.RED_CAGE, consts.TargetList.GREEN_CAGE):
-          drop_ball()
+        # if robot.rescue_target in (consts.TargetList.RED_CAGE, consts.TargetList.GREEN_CAGE):
+        #   drop_ball()
         x_center, y_center, w, h = map(float, box.xywh[0])
         dist = x_center - cx
         area = w * h
@@ -694,9 +694,9 @@ def release_ball() -> bool:
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_speed(1400, 1400)
-  sleep_sec(0.4)
+  sleep_sec(0.5)
   robot.set_speed(1500, 1500)
-  robot.set_arm(1536, 0)
+  robot.set_arm(1700, 0)
   robot.send_arm()
   sleep_sec(1.5)
   robot.set_arm(3072, 0)
@@ -732,7 +732,7 @@ def change_position() -> bool:
   """
   logger.debug("Change position")
   robot.set_speed(1750, 1250)
-  sleep_sec(consts.TURN_20_TIME)
+  sleep_sec(consts.TURN_18_TIME)
   robot.set_speed(1500, 1500)
   sleep_sec(0.2)
   find_best_target()
@@ -937,7 +937,7 @@ if __name__ == "__main__":
       if (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
         if not robot.rescue_ball_flag:
-          robot.write_rescue_turning_angle(robot.rescue_turning_angle + 20)
+          robot.write_rescue_turning_angle(robot.rescue_turning_angle + 18)
         # Only call set_target() if searching for balls (rotation-based logic).
         # For cages/exit, keep searching the current target.
         if robot.rescue_target in [

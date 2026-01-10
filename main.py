@@ -1020,7 +1020,7 @@ if __name__ == "__main__":
         )
       except Exception:
         logger.info(f"Searching for target id: {robot.rescue_target}")
-      if (robot.rescue_offset is None) or (robot.rescue_size is None):
+      if robot.rescue_target != consts.TargetList.EXIT.value and (robot.rescue_offset is None) or (robot.rescue_size is None):
         change_position()
         if not robot.rescue_ball_flag:
           robot.write_rescue_turning_angle(robot.rescue_turning_angle + 18)
@@ -1077,9 +1077,6 @@ if __name__ == "__main__":
                   robot.send_speed()
                   robot.write_is_rescue_flag(False)
                   break
-            # robot.set_speed(1500, 1500)
-            # robot.send_speed()
-            # robot.write_is_rescue_flag(False)
         elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
           motorl, motorr = calculate_ball()
           robot.set_speed(motorl, motorr)

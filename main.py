@@ -1011,7 +1011,8 @@ if __name__ == "__main__":
       robot.write_is_rescue_flag(False)
       robot.write_last_slope_get_time(time.time())
       robot.write_rescue_ball_flag(False)
-    elif robot.is_rescue_flag:
+      exit_cage_flag = True
+    elif True:
       find_best_target()
       try:
         logger.info(

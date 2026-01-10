@@ -914,6 +914,7 @@ def wall_follow_ccw() -> bool:
     turn = BASE_TURN * -1
   if side_dist < TARGET_MIN:
     turn = BASE_TURN
+  turn = 0
   left_speed  = BASE_SPEED - turn
   right_speed = BASE_SPEED + turn
   left_speed, right_speed = clamp(left_speed), clamp(right_speed)
@@ -1020,7 +1021,7 @@ if __name__ == "__main__":
         )
       except Exception:
         logger.info(f"Searching for target id: {robot.rescue_target}")
-      if not exit_cage_flag and (robot.rescue_offset is None) or (robot.rescue_size is None):
+      if not exit_cage_flag and ((robot.rescue_offset is None) or (robot.rescue_size is None)):
         change_position()
         if not robot.rescue_ball_flag:
           robot.write_rescue_turning_angle(robot.rescue_turning_angle + 18)

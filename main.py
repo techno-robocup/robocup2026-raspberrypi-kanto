@@ -1077,9 +1077,9 @@ if __name__ == "__main__":
                   robot.send_speed()
                   robot.write_is_rescue_flag(False)
                   break
-            robot.set_speed(1500, 1500)
-            robot.send_speed()
-            robot.write_is_rescue_flag(False)
+            # robot.set_speed(1500, 1500)
+            # robot.send_speed()
+            # robot.write_is_rescue_flag(False)
         elif robot.rescue_target == consts.TargetList.BLACK_BALL.value or robot.rescue_target == consts.TargetList.SILVER_BALL.value:
           motorl, motorr = calculate_ball()
           robot.set_speed(motorl, motorr)

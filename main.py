@@ -890,7 +890,7 @@ def wall_follow_ccw() -> bool:
   ultrasonic = robot.ultrasonic
   front_dist = ultrasonic[0]
   side_dist = ultrasonic[1]
-  logger.debug(f"front {front_dist}, side {side_dist}")
+  logger.info(f"front {front_dist}, side {side_dist}")
   if front_dist is None:
     robot.set_speed(1500, 1500)
     robot.send_speed()
@@ -1046,7 +1046,7 @@ if __name__ == "__main__":
                 robot.set_speed(1700, 1700)
                 sleep_sec(1)
                 robot.set_speed(1300, 1300)
-                sleep_sec(2)
+                sleep_sec(1)
                 robot.set_speed(1500, 1500)
                 robot.send_speed()
                 robot.set_speed(1250, 1750)
@@ -1054,7 +1054,8 @@ if __name__ == "__main__":
                 exit_cage_flag = True
           else:
             logger.info("wall follow ccw")
-            if wall_follow_ccw():
+            result = wall_follow_ccw()
+            if result:
               robot.set_speed(1700, 1300)
               sleep_sec(consts.TURN_90_TIME)
               while True:

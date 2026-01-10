@@ -903,7 +903,7 @@ def wall_follow_ccw() -> bool:
   if side_dist > OPEN_THRESHOLD:
     logger.info("Wall opening detected")
     return True
-  elif front_dist <= 2:
+  elif front_dist <= 4.0:
     robot.set_speed(1250, 1750)
     sleep_sec(consts.TURN_90_TIME)
     robot.set_speed(1500, 1500)
@@ -1053,7 +1053,7 @@ if __name__ == "__main__":
                 robot.set_speed(1500, 1500)
                 robot.send_speed()
                 robot.set_speed(1250, 1750)
-                sleep_sec(consts.TURN_90_TIME)
+                sleep_sec(consts.TURN_90_TIME * 2)
                 robot.set_speed(1500, 1500)
                 robot.send_speed()
                 exit_cage_flag = True

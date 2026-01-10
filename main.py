@@ -886,7 +886,7 @@ def wall_follow_ccw() -> bool:
   TARGET_MAX = 50.0
   OPEN_THRESHOLD = 200.0
   BASE_SPEED = 1600
-  BASE_TURN = 50
+  BASE_TURN = 100
   ultrasonic = robot.ultrasonic
   front_dist = ultrasonic[0]
   side_dist = ultrasonic[1]

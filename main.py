@@ -1028,6 +1028,7 @@ if __name__ == "__main__":
         ]:
           set_target()
       else:
+        robot.write_rescue_turning_angle(740)
         if True:
           ultrasonic_info = robot.ultrasonic
           if not exit_cage_flag:

@@ -46,7 +46,7 @@ MAX_SPEED = 2000
 MIN_SPEED = 1000
 KP = 245
 DP = 200
-BOP = 0.045  # Ball Offset P
+BOP = 0.047  # Ball Offset P
 BSP = 1.5  # Ball Size P
 COP = 0.05  # Cage Offset P
 CSP = 1.5
@@ -558,7 +558,14 @@ def find_best_target() -> None:
       except Exception as e:
         logger.exception(f"Error processing detection box: {e}")
         continue
-      if cls == robot.rescue_target:
+      if robot.rescue_target == consts.TargetList.EXIT:
+        if cls == consts.TargetList.RED_CAGE:
+          x_center, y_center, w, h = map(float, box.xywh[0])
+          dist = x_center - cx
+          area = w * h
+          best_angle = dist
+          best_size = area
+      elif cls == robot.rescue_target:
         x_center, y_center, w, h = map(float, box.xywh[0])
         dist = x_center - cx
         area = w * h
@@ -773,8 +780,8 @@ def set_target() -> bool:
     robot.write_rescue_turning_angle(0)
     return False
   if robot.rescue_turning_angle >= 720:
-    # robot.write_rescue_target(consts.TargetList.EXIT.value)
-      robot.write_rescue_target(consts.TargetList.RED_CAGE.value)
+    robot.write_rescue_target(consts.TargetList.EXIT.value)
+      # robot.write_rescue_target(consts.TargetList.RED_CAGE.value)
     # robot.write_rescue_target(consts.TargetList.SILVER_BALL.value)
   elif robot.rescue_turning_angle >= 360:
     robot.write_rescue_target(consts.TargetList.BLACK_BALL.value)

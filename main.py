@@ -890,6 +890,7 @@ def wall_follow_ccw() -> bool:
   ultrasonic = robot.ultrasonic
   front_dist = ultrasonic[0]
   side_dist = ultrasonic[1]
+  logger.debug(f"front {front_dist}, side {side_dist}")
   if front_dist is None:
     robot.set_speed(1500, 1500)
     robot.send_speed()
@@ -897,6 +898,8 @@ def wall_follow_ccw() -> bool:
   elif front_dist <= 4:
     robot.set_speed(1250, 1750)
     sleep_sec(consts.TURN_90_TIME)
+    robot.set_speed(1500, 1500)
+    robot.send_speed()
     return False
   if side_dist is None or side_dist <= 0:
     robot.set_speed(1500, 1500)

@@ -84,7 +84,7 @@ MIN_GREEN_AREA = 200
 MIN_RED_AREA = 600
 MIN_OBJECT_AVOIDANCE_LINE_AREA = 5000
 
-TURN_180_TIME = 1.8
+TURN_90_TIME = 1.6
 TURN_18_TIME = 0.32
 
 # Green mark intersection turning times (seconds)

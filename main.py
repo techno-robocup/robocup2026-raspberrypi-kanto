@@ -882,13 +882,11 @@ def wall_follow_ccw() -> bool:
   Follow the wall counter-clockwise using ultrasonic[1].
   Returns True if an opening is detected.
   """
-  TARGET_MIN = 4.0
-  TARGET_MAX = 6.0
-  OPEN_THRESHOLD = 9.0
-
-  BASE_SPEED = 1550
-  TURN_GAIN = 20
-
+  TARGET_MIN = 5.0
+  TARGET_MAX = 7.0
+  OPEN_THRESHOLD = 20.0
+  BASE_SPEED = 1600
+  BASE_TURN = 50
   ultrasonic = robot.ultrasonic
   front_dist = ultrasonic[0]
   side_dist = ultrasonic[1]
@@ -909,19 +907,13 @@ def wall_follow_ccw() -> bool:
     logger.info("Wall opening detected")
     return True
 
-  error = 0
+  if side_dist > TARGET_MAX:
+    turn = BASE_TURN * -1
   if side_dist < TARGET_MIN:
-    error = TARGET_MIN - side_dist
-  elif side_dist > TARGET_MAX:
-    error = TARGET_MAX - side_dist
-
-  turn = int(error * TURN_GAIN)
-
+    turn = BASE_TURN
   left_speed  = BASE_SPEED - turn
   right_speed = BASE_SPEED + turn
-
   left_speed, right_speed = clamp(left_speed), clamp(right_speed)
-
   robot.set_speed(left_speed, right_speed)
   robot.send_speed()
 
@@ -1050,21 +1042,13 @@ if __name__ == "__main__":
               robot.rescue_image.shape[0] * 1 / 2):
                 robot.set_speed(1700, 1700)
                 sleep_sec(1)
-                while True:
-                  ultrasonic_info = robot.ultrasonic
-                  if ultrasonic_info[0] > 4:
-                    break
-                  robot.set_speed(1400, 1400)
-                  robot.send_speed()
-                  if robot.robot_stop:
-                    robot.set_speed(1500, 1500)
-                    robot.send_speed()
-                    logger.debug("Sleep interrupted by button")
-              robot.set_speed(1500, 1500)
-              robot.send_speed()
-              robot.set_speed(1250, 1750)
-              sleep_sec(consts.TURN_90_TIME)
-              exit_cage_flag = True
+                robot.set_speed(1300, 1300)
+                sleep_sec(2)
+                robot.set_speed(1500, 1500)
+                robot.send_speed()
+                robot.set_speed(1250, 1750)
+                sleep_sec(consts.TURN_90_TIME)
+                exit_cage_flag = True
           else:
             logger.info("wall follow ccw")
             if wall_follow_ccw():

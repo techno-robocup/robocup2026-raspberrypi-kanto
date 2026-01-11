@@ -588,7 +588,7 @@ def find_best_target() -> None:
           # best_target_h = h
           if cls == consts.TargetList.BLACK_BALL.value or cls == consts.TargetList.SILVER_BALL.value:
             is_bottom_third = best_target_y and best_target_y > (image_height *
-                                                                 2 / 3)
+                                                                 5 / 9)
             if best_angle is not None:
               ball_left = best_angle - best_target_w / 2 + image_width / 2
               ball_right = best_angle + best_target_w / 2 + image_width / 2
@@ -619,7 +619,7 @@ def find_best_target() -> None:
           # best_target_h = h
           # Check if ball is close enough to catch (same logic as primary target)
           is_bottom_third = best_target_y and best_target_y > (image_height *
-                                                               2 / 3)
+                                                               5 / 9)
           ball_left = best_angle - best_target_w / 2 + image_width / 2
           ball_right = best_angle + best_target_w / 2 + image_width / 2
           includes_center = ball_left <= image_width / 2 <= ball_right
@@ -672,13 +672,13 @@ def catch_ball() -> int:
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_speed(1400, 1400)
-  sleep_sec(1.5)
+  sleep_sec(1)
   robot.set_speed(1500, 1500)
   robot.send_speed()
-  robot.set_arm(1380, 0)
+  robot.set_arm(1420, 0)
   robot.send_arm()
   robot.set_speed(1650, 1650)
-  sleep_sec(1.5)
+  sleep_sec(1.3)
   robot.set_speed(1500, 1500)
   robot.send_speed()
   robot.set_arm(1000, 0)
@@ -1053,7 +1053,7 @@ if __name__ == "__main__":
                 robot.set_speed(1500, 1500)
                 robot.send_speed()
                 robot.set_speed(1250, 1750)
-                sleep_sec(consts.TURN_90_TIME * 2)
+                sleep_sec(consts.TURN_90_TIME * 1.5)
                 robot.set_speed(1500, 1500)
                 robot.send_speed()
                 exit_cage_flag = True
@@ -1063,7 +1063,9 @@ if __name__ == "__main__":
             if result:
               robot.set_speed(1500, 1500)
               robot.send_speed()
-              robot.set_speed(1800, 1300)
+              robot.set_speed(1650, 1650)
+              sleep_sec(0.7)
+              robot.set_speed(1750, 1250)
               sleep_sec(consts.TURN_90_TIME)
               while True:
                 robot.update_button_stat()

@@ -81,7 +81,7 @@ LINE_RECOVERY_ANGLE_THRESHOLD = 0.15  # Trigger when angle error exceeds this (r
 LINE_RECOVERY_BACKUP_TIME = 1.0  # Seconds to back up
 LINE_RECOVERY_BACKUP_SPEED = 1300  # Motor speed for backing up (< 1500 = reverse)
 MIN_GREEN_AREA = 200
-MIN_RED_AREA = 600
+MIN_RED_AREA = 2000
 MIN_OBJECT_AVOIDANCE_LINE_AREA = 5000
 
 TURN_90_TIME = 1.6

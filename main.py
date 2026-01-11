@@ -182,7 +182,7 @@ def execute_green_mark_turn() -> bool:
   # Execute turn based on detected directions
   if has_left and has_right:
     start_time = time.time()
-    max_time = consts.MAX_TURN_90_TIME
+    max_time = consts.MAX_TURN_180_TIME
     target_crossings = 2
     line_crossings = 0
     prev_checkpoint_black = False  # Initialize after delay

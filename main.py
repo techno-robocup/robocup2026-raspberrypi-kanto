@@ -1025,7 +1025,7 @@ def handle_ball_approach() -> None:
   robot.send_speed()
   
   if robot.rescue_ball_flag:
-    is_not_took = catch_ball()
+    catch_ball()
     
     # Switch to corresponding cage after catching ball
     if robot.rescue_target == consts.TargetList.SILVER_BALL.value:

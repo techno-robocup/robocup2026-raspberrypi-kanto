@@ -15,7 +15,7 @@ This is a Raspberry Pi-based robot control system for RoboCup 2026. It includes:
 - Depth estimation using Depth-Anything-V2
 - Line tracing capabilities
 - Serial communication with robot hardware (ESP32)
-- Systemd service integration for automatic startup
+- systemd service integration for automatic startup
 
 ## Initial Setup
 

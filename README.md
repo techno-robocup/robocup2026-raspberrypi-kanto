@@ -1,29 +1,51 @@
 # robocup2026-raspberrypi-kanto
 
-2025/12/19
+> **⚠️ ARCHIVE NOTICE**
+> 
+> This repository has been archived and is no longer actively maintained.
+> 
+> **Please visit the new repository:** [techno-robocup/robocup2026-raspberrypi-program](https://github.com/techno-robocup/robocup2026-raspberrypi-program)
+
+---
+
+## About
+
+This is a Raspberry Pi-based robot control system for RoboCup 2026. It includes:
+- YOLO-based object detection for rescue operations
+- Depth estimation using Depth-Anything-V2
+- Line tracing capabilities
+- Serial communication with robot hardware (ESP32)
+- systemd service integration for automatic startup
+
+## Initial Setup
+
+### User Permissions
+
+Add the user to required groups for camera and serial access:
 ```bash
 sudo usermod -aG video robo
 sudo usermod -aG dialout robo
 ```
 
-Creating pyenv
+### Python Environment
+
+Create a virtual environment with system site packages:
 ```bash
 python3 -m venv .venv --system-site-packages
 ```
 
+Install uv package manager:
 ```bash
 pip install --break-system-packages uv
 ```
 
-
+Initialize uv and install dependencies:
 ```bash
 uv init
 uv add opencv-python ultralytics gradio_imageslider gradio matplotlib torch torchvision pyserial Pillow huggingface-hub depth-anything-v2
-
 ```
 
-
-Modify
+Modify `.venv/pyvenv.cfg` to include:
 ```
 include-system-site-packages = true
 ```
@@ -74,4 +96,13 @@ This will automatically trigger a service restart via the path monitoring mechan
 - **robot.path**: Monitors `/home/robo/restart.trigger` for changes
 - **robot-restart.service**: Oneshot service that restarts robot.service when triggered
 
-rm `/etc/ssh/sshd_config.d/rename_user.conf`
+## Additional Configuration
+
+Remove SSH configuration if needed:
+```bash
+rm /etc/ssh/sshd_config.d/rename_user.conf
+```
+
+## More Information
+
+For depth estimation setup details, see [DEPTH_SETUP.md](DEPTH_SETUP.md).
